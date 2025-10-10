@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backrooms Ultimate</title>
+<style>
+body { margin:0; overflow:hidden; background:#111; font-family:'Courier New', monospace; }
+canvas { display:block; }
+#hud { position:absolute; top:10px; left:10px; color:#000; font-size:18px; background:rgba(255,255,255,0.6); padding:5px 10px; border-radius:5px; }
+#overlay {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.9); display:flex; flex-direction:column; justify-content:center; align-items:center;
+  color:white; font-size:24px; text-align:center; display:none;
+}
+button { margin-top:20px; padding:10px 20px; font-size:20px; cursor:pointer; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="hud">Bouteilles: 0 | Health: 100</div>
+<div id="overlay">
+  <div id="overlayText"></div>
+  <button id="overlayBtn"></button>
+</div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const overlay = document.getElementById('overlay');
+const overlayText = document.getElementById('overlayText');
+const overlayBtn = document.getElementById('overlayBtn');
+
+const tileSize = 50;
+const chunkSize = 16;
+const viewDistance = 3;
+const playerSpeed = 0.08;
+const monsterSpeed = 0.12;
+const maxBottles = 30;
+const playerRadius = 0.28;
+const wallMargin = 0.1;
+const pickupRadius = playerRadius + 0.6;
+
+let keys = {};
+let player = { x: 1.5, y: 1.5, bottles:0 };
+let chunks = {};
+let monsters = [];
+let gameOver = false;
+let gameWon = false;
+
+function mod(n, m) { return ((n % m) + m) % m; }
+
+// --- Génération des chunks avec portes reliées
+function generateChunk(cx, cy) {
+    let chunk = [];
+    for (let y=0;y<chunkSize;y++){
+        let row=[];
+        for(let x=0;x<chunkSize;x++){
+            if(x===0||y===0||x===chunkSize-1||y===chunkSize-1) row.push(1);
+            else row.push(0);
+        }
+        chunk.push(row);
+    }
+
+    const neighbors = [{dx:0, dy:-1}, {dx:0, dy:1}, {dx:-1, dy:0}, {dx:1, dy:0}];
+    const doorPositions = [6,7,8,9];
+    neighbors.forEach(n=>{
+        const nx = cx + n.dx;
+        const ny = cy + n.dy;
+        const neighbor = chunks[`${nx},${ny}`];
+        if(neighbor){
+            if(n.dy===-1) doorPositions.forEach(d=>chunk[0][d]=0);
+            if(n.dy===1) doorPositions.forEach(d=>chunk[chunkSize-1][d]=0);
+            if(n.dx===-1) doorPositions.forEach(d=>chunk[d][0]=0);
+            if(n.dx===1) doorPositions.forEach(d=>chunk[d][chunkSize-1]=0);
+        } else {
+            const d = doorPositions[Math.floor(Math.random()*doorPositions.length)];
+            if(n.dy===-1) chunk[0][d]=0;
+            if(n.dy===1) chunk[chunkSize-1][d]=0;
+            if(n.dx===-1) chunk[d][0]=0;
+            if(n.dx===1) chunk[d][chunkSize-1]=0;
+        }
+    });
+
+    for(let i=0;i<20;i++){
+        let wx=Math.floor(Math.random()*(chunkSize-4))+2;
+        let wy=Math.floor(Math.random()*(chunkSize-4))+2;
+        chunk[wy][wx]=1;
+    }
+
+    for(let i=0;i<5;i++){
+        let bx, by;
+        do{
+            bx=Math.floor(Math.random()*(chunkSize-4))+2;
+            by=Math.floor(Math.random()*(chunkSize-4))+2;
+        }while(chunk[by][bx]!==0);
+        chunk[by][bx]=2;
+    }
+
+    return chunk;
+}
+
+function getChunk(cx, cy){
+    const key=`${cx},${cy}`;
+    if(!chunks[key]) chunks[key]=generateChunk(cx,cy);
+    return chunks[key];
+}
+
+// --- MONSTRES
+function spawnMonsterAroundPlayer(){
+    if(gameOver || gameWon) return;
+    const minDist = 5;
+    const maxDist = 15;
+    let angle = Math.random() * Math.PI * 2;
+    let distance = minDist + Math.random() * (maxDist - minDist);
+    const spawnX = player.x + Math.cos(angle) * distance;
+    const spawnY = player.y + Math.sin(angle) * distance;
+    const chunk = getChunk(Math.floor(spawnX), Math.floor(spawnY));
+    const localX = mod(Math.floor(spawnX), chunkSize);
+    const localY = mod(Math.floor(spawnY), chunkSize);
+    if(chunk[localY][localX] !== 1){
+        monsters.push({x: spawnX, y: spawnY, cooldown: 0});
+    }
+}
+
+function moveMonster(m){
+    if(gameOver||gameWon) return;
+    if(m.cooldown>0){ m.cooldown--; return; }
+    let dx=player.x-m.x;
+    let dy=player.y-m.y;
+    let nx=m.x, ny=m.y;
+    if(Math.abs(dx)>Math.abs(dy)) nx += dx>0?monsterSpeed:-monsterSpeed;
+    else ny += dy>0?monsterSpeed:-monsterSpeed;
+    const chunk=getChunk(Math.floor(nx/chunkSize), Math.floor(ny/chunkSize));
+    const localX=mod(Math.floor(nx), chunkSize);
+    const localY=mod(Math.floor(ny), chunkSize);
+    if(chunk[localY][localX]!==1){ m.x=nx; m.y=ny; }
+    if(Math.hypot(player.x-m.x, player.y-m.y)<playerRadius*2) triggerGameOver();
+    m.cooldown=1;
+}
+
+// --- COLLISIONS
+function collides(x, y){
+    const startX = Math.floor(x - playerRadius - wallMargin);
+    const endX   = Math.floor(x + playerRadius + wallMargin);
+    const startY = Math.floor(y - playerRadius - wallMargin);
+    const endY   = Math.floor(y + playerRadius + wallMargin);
+    for(let i=startX;i<=endX;i++){
+        for(let j=startY;j<=endY;j++){
+            const chunk = getChunk(Math.floor(i/chunkSize), Math.floor(j/chunkSize));
+            const lx = mod(Math.floor(i), chunkSize);
+            const ly = mod(Math.floor(j), chunkSize);
+            if(chunk[ly][lx]===1){
+                const nearestX = Math.max(i, Math.min(x, i+1));
+                const nearestY = Math.max(j, Math.min(y, j+1));
+                if(Math.hypot(x-nearestX, y-nearestY) < playerRadius) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function movePlayer(dx, dy){
+    let nx = player.x + dx; let ny = player.y;
+    if(!collides(nx, ny)) player.x = nx;
+    nx = player.x; ny = player.y + dy;
+    if(!collides(nx, ny)) player.y = ny;
+}
+
+// --- DESSIN
+function drawTile(tile,x,y){
+    if(tile===1) ctx.fillStyle = '#FFD966'; // murs vifs
+    else ctx.fillStyle = '#F9E79F';         // sol lumineux
+    ctx.fillRect(x,y,tileSize,tileSize);
+}
+
+function drawMap(){
+    const startChunkX=Math.floor(player.x/chunkSize)-viewDistance;
+    const startChunkY=Math.floor(player.y/chunkSize)-viewDistance;
+    const endChunkX=Math.floor(player.x/chunkSize)+viewDistance;
+    const endChunkY=Math.floor(player.y/chunkSize)+viewDistance;
+    for(let cy=startChunkY;cy<=endChunkY;cy++){
+        for(let cx=startChunkX;cx<=endChunkX;cx++){
+            const chunk=getChunk(cx,cy);
+            for(let y=0;y<chunkSize;y++){
+                for(let x=0;x<chunkSize;x++){
+                    const gx=cx*chunkSize+x;
+                    const gy=cy*chunkSize+y;
+                    const sx=canvas.width/2+(gx-player.x)*tileSize;
+                    const sy=canvas.height/2+(gy-player.y)*tileSize;
+                    drawTile(chunk[y][x],sx,sy);
+                }
+            }
+        }
+    }
+}
+
+function drawPlayer(){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,playerRadius*tileSize,0,Math.PI*2); ctx.fill(); }
+function drawMonsters(){ ctx.fillStyle='#f00'; monsters.forEach(m=>{ const sx=canvas.width/2+(m.x-player.x)*tileSize; const sy=canvas.height/2+(m.y-player.y)*tileSize; ctx.beginPath(); ctx.arc(sx,sy,playerRadius*tileSize,0,Math.PI*2); ctx.fill(); }); }
+function drawBottles(){
+    ctx.fillStyle='#ff0';
+    const startChunkX=Math.floor(player.x/chunkSize)-viewDistance;
+    const startChunkY=Math.floor(player.y/chunkSize)-viewDistance;
+    const endChunkX=Math.floor(player.x/chunkSize)+viewDistance;
+    const endChunkY=Math.floor(player.y/chunkSize)+viewDistance;
+    for(let cy=startChunkY;cy<=endChunkY;cy++){
+        for(let cx=startChunkX;cx<=endChunkX;cx++){
+            const chunk=getChunk(cx,cy);
+            for(let y=0;y<chunkSize;y++){
+                for(let x=0;x<chunkSize;x++){
+                    if(chunk[y][x]===2){
+                        const gx = cx*chunkSize + x + 0.5;
+                        const gy = cy*chunkSize + y + 0.5;
+                        if(Math.hypot(player.x - gx, player.y - gy) < pickupRadius){  
+                            player.bottles++;
+                            chunk[y][x]=0;
+                            if(player.bottles>=maxBottles) triggerWin();
+                        }
+                        const sx=canvas.width/2+(gx-player.x)*tileSize;
+                        const sy=canvas.height/2+(gy-player.y)*tileSize;
+                        ctx.beginPath(); ctx.arc(sx,sy,playerRadius*tileSize,0,Math.PI*2); ctx.fill();
+                    }
+                }
+            }
+        }
+    }
+}
+
+function drawLight(){
+    const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,50,canvas.width/2,canvas.height/2,300);
+    grad.addColorStop(0,'rgba(255,255,255,0.1)');
+    grad.addColorStop(1,'rgba(0,0,0,1)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function updateHUD(){ document.getElementById('hud').innerText=`Bouteilles: ${player.bottles} | Health: 100`; }
+function triggerGameOver(){
+    gameOver=true;
+    overlayText.innerText="GAME OVER !";
+    overlayBtn.innerText="Réessayer";
+    overlayBtn.onclick=()=> location.reload();
+    overlay.style.display="flex";
+}
+function triggerWin(){
+    gameWon=true;
+    overlayText.innerText="Vous avez assez de bouteilles\nLe code est --8-------";
+    overlayBtn.innerText="Menu";
+    overlayBtn.onclick=()=> location.href="index.html";
+    overlay.style.display="flex";
+}
+
+document.addEventListener('keydown', e=>keys[e.key]=true);
+document.addEventListener('keyup', e=>keys[e.key]=false);
+
+function gameLoop(){
+    if(!gameOver && !gameWon){
+        if(keys['ArrowUp']) movePlayer(0,-playerSpeed);
+        if(keys['ArrowDown']) movePlayer(0,playerSpeed);
+        if(keys['ArrowLeft']) movePlayer(-playerSpeed,0);
+        if(keys['ArrowRight']) movePlayer(playerSpeed,0);
+        monsters.forEach(moveMonster);
+        if(Math.random() < 0.01) spawnMonsterAroundPlayer();
+    }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawMap();
+    drawBottles();
+    drawMonsters();
+    drawPlayer();
+    drawLight();
+    updateHUD();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>

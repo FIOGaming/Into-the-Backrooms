@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Backrooms Runner</title>
+<style>
+body {
+  margin:0;
+  overflow:hidden;
+  background:#e6d38b;
+  font-family:Arial,sans-serif;
+}
+canvas{display:block;}
+.ui-button{
+  position:absolute;
+  padding:10px 20px;
+  font-size:20px;
+  background:#333;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  border-radius:5px;
+  display:none;
+}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<button id="restartBtn" class="ui-button">Recommencer</button>
+<button id="menuBtn" class="ui-button">Menu</button>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let baseSpeed = 12;
+let gameSpeed = baseSpeed;
+let gravity = 0.8;
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+let gameWin = false;
+let lastObstacleX = 0;
+let minGap = 0.5; // ⚡ Obstacles ultra rapprochés !
+
+const player = {
+  x: 150,
+  y: canvas.height - 50,
+  radius:25,
+  dy:0,
+  jumping:false,
+  crouching:false,
+  color:"#ffffff"
+};
+
+const monster = {
+  x:50,
+  y:canvas.height-50,
+  radius:25,
+  color:"#ff0000",
+  speed:2
+};
+
+function createObstacle(){
+  const type = Math.random() <0.5 ? "low":"high";
+  let height, y;
+
+  if(type==="low"){
+    height=50;
+    y=canvas.height-50;
+  } else {
+    height=150;
+    y=canvas.height-50-height;
+  }
+
+  let gap = Math.random() < 0.2 ? 20 : minGap;
+  if(obstacles.length && (canvas.width - lastObstacleX) < gap) return;
+
+  obstacles.push({x:canvas.width, y:y, width:50, height:height, type:type});
+  lastObstacleX = canvas.width;
+}
+
+function drawPlayer(){
+  ctx.fillStyle=player.color;
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawMonster(){
+  ctx.fillStyle=monster.color;
+  ctx.beginPath();
+  ctx.arc(monster.x, monster.y, monster.radius,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawBackground(){
+  const offset = Math.sin(Date.now()/150)*15;
+
+  const ceilingGrad = ctx.createLinearGradient(0,0,0,100);
+  ceilingGrad.addColorStop(0,"#f3e5ab");
+  ceilingGrad.addColorStop(1,"#e6d38b");
+  ctx.fillStyle = ceilingGrad;
+  ctx.fillRect(0+offset,0,canvas.width,100);
+
+  const floorGrad = ctx.createLinearGradient(0,canvas.height-100,0,canvas.height);
+  floorGrad.addColorStop(0,"#d2b48c");
+  floorGrad.addColorStop(1,"#a0522d");
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0+offset,canvas.height-100,canvas.width,100);
+
+  ctx.fillStyle="rgba(200,180,120,0.1)";
+  for(let i=0;i<canvas.width;i+=40){
+    ctx.fillRect(i,0,20,canvas.height);
+  }
+
+  ctx.strokeStyle="#00000030";
+  for(let i=0;i<canvas.width;i+=10){
+    ctx.beginPath();
+    ctx.moveTo(i,canvas.height-100);
+    ctx.lineTo(i,canvas.height);
+    ctx.stroke();
+  }
+}
+
+function drawObstacles(){
+  obstacles.forEach(obs=>{
+    const grad = ctx.createLinearGradient(obs.x, obs.y, obs.x, obs.y+obs.height);
+    grad.addColorStop(0,"#cfa14f");
+    grad.addColorStop(0.5,"#b8860b");
+    grad.addColorStop(1,"#8b4513");
+    ctx.fillStyle=grad;
+    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    ctx.strokeStyle="#000";
+    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+  });
+}
+
+function drawScore(){
+  ctx.fillStyle="#000";
+  ctx.font="24px Arial";
+  ctx.fillText("Score: "+score,20,40);
+}
+
+function endGame(){
+  gameOver=true;
+  const restartBtn = document.getElementById("restartBtn");
+  restartBtn.style.display="block";
+  restartBtn.style.top = (canvas.height/2 + 50)+"px";
+  restartBtn.style.left = (canvas.width/2 - 70)+"px";
+
+  ctx.fillStyle="rgba(0,0,0,0.7)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#ff0000";
+  ctx.font="50px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2-50);
+  ctx.fillStyle="#fff";
+  ctx.font="30px Arial";
+  ctx.fillText("Score: "+score, canvas.width/2, canvas.height/2);
+}
+
+function winGame(){
+  gameWin=true;
+  const menuBtn = document.getElementById("menuBtn");
+  menuBtn.style.display="block";
+  menuBtn.style.top = (canvas.height/2 + 50)+"px";
+  menuBtn.style.left = (canvas.width/2 - 50)+"px";
+  
+  ctx.fillStyle="rgba(0,0,0,0.7)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#00ff00";
+  ctx.font="50px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("Vous avez survécu au couloir !", canvas.width/2, canvas.height/2-80);
+  ctx.font="35px Arial";
+  ctx.fillText("Le code est -6--------", canvas.width/2, canvas.height/2 - 20);
+}
+
+function circleRectCollision(circle, rect){
+  const distX = Math.abs(circle.x - rect.x - rect.width/2);
+  const distY = Math.abs(circle.y - rect.y - rect.height/2);
+  if(distX > (rect.width/2 + circle.radius)) return false;
+  if(distY > (rect.height/2 + circle.radius)) return false;
+  if(distX <= (rect.width/2)) return true;
+  if(distY <= (rect.height/2)) return true;
+  const dx = distX - rect.width/2;
+  const dy = distY - rect.height/2;
+  return (dx*dx + dy*dy <= circle.radius*circle.radius);
+}
+
+function update(){
+  if(gameOver || gameWin) return;
+
+  gameSpeed = baseSpeed + Math.floor(score / 500);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground();
+
+  if(player.jumping){
+    player.dy += gravity;
+    player.y += player.dy;
+    if(player.y>canvas.height-50){
+      player.y=canvas.height-50;
+      player.dy=0;
+      player.jumping=false;
+    }
+  }
+
+  if(monster.x + monster.radius < player.x - 50){
+    monster.x += monster.speed * 0.5;
+  }
+
+  obstacles.forEach((obs,index)=>{
+    obs.x -= gameSpeed;
+
+    if(circleRectCollision(player,obs)){
+        if(obs.type === "low") {
+            if(player.y + player.radius > obs.y) {
+                player.x = obs.x - player.radius;
+            }
+        } else if(obs.type === "high") {
+            if(!player.crouching && player.y - player.radius < obs.y + obs.height) {
+                player.x = obs.x - player.radius;
+            }
+        }
+    }
+
+    const dx = monster.x - (obs.x + obs.width/2);
+    const dy = monster.y - (obs.y + obs.height/2);
+    if(Math.sqrt(dx*dx + dy*dy) < monster.radius + Math.max(obs.width,obs.height)/2){
+        obstacles.splice(index,1);
+    }
+  });
+
+  obstacles = obstacles.filter(obs => obs.x+obs.width>0);
+  if(Math.random()<0.02) createObstacle();
+
+  drawObstacles();
+  drawPlayer();
+  drawMonster();
+
+  const dx = monster.x - player.x;
+  const dy = monster.y - player.y;
+  if(Math.sqrt(dx*dx + dy*dy) < monster.radius + player.radius){
+      endGame();
+  }
+
+  score++;
+  drawScore();
+
+  if(score>=2000) winGame();
+
+  requestAnimationFrame(update);
+}
+
+document.addEventListener("keydown",(e)=>{
+  if((e.code==="Space"||e.code==="ArrowUp"||e.key.toLowerCase()==="z") && !player.jumping && !player.crouching){
+    player.jumping=true;
+    player.dy=-14;
+  }
+  if((e.code==="ArrowDown"||e.key.toLowerCase()==="s") && !player.jumping){
+    if(!player.crouching){
+      player.crouching=true;
+      player.radius=15;
+      player.y+=10;
+    }
+  }
+});
+
+document.addEventListener("keyup",(e)=>{
+  if((e.code==="ArrowDown"||e.key.toLowerCase()==="s") && player.crouching){
+    player.crouching=false;
+    player.radius=25;
+    player.y-=10;
+  }
+});
+
+document.getElementById("restartBtn").addEventListener("click",()=>location.reload());
+document.getElementById("menuBtn").addEventListener("click",()=>window.location.href="index.html");
+
+update();
+</script>
+</body>
+</html>

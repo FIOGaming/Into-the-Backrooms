@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Backrooms - Version stable</title>
+<style>
+  html,body{margin:0;padding:0;overflow:hidden;background:#000}
+  canvas{display:block;background:#111}
+  #pressHint{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);font-weight:bold;color:#fff;z-index:20}
+  #staminaBarContainer{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:220px;height:12px;background:rgba(255,255,255,0.15);border-radius:6px;overflow:hidden;z-index:15}
+  #staminaBar{width:100%;height:100%;background:#39f;transition:width .1s}
+  #imageOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:100}
+  #imageOverlay img{width:100%;height:100%;object-fit:cover}
+  #modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:200;background:rgba(0,0,0,.8)}
+  #modal h1{color:#fff;font-family:monospace;font-size:40px}
+  #modal button{margin-top:20px;padding:10px 16px;font-weight:bold;border:0;border-radius:8px;background:#ffda7a;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="pressHint">Appuie sur <b>E</b> pour lire</div>
+<div id="staminaBarContainer"><div id="staminaBar"></div></div>
+<div id="imageOverlay"><img src="https://france3-regions.franceinfo.fr/image/bvD-ny9nNd1W8WlElWZ7TjwPnyw/0x0:554x475/0x0/filters:format(webp)/regions/2024/06/04/skin-stealer-og-665f658c94cee761764209.jpg"></div>
+<div id="modal"><div style="text-align:center"><h1 id="modalText"></h1><button id="menuBtn">Menu</button></div></div>
+
+<script>
+const map = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,3,0,0,0,1,0,1,0,0,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+// Configuration
+const tile = 64, rows = map.length, cols = map[0].length;
+const c = document.getElementById("game"), ctx = c.getContext("2d");
+function resize(){ c.width = innerWidth; c.height = innerHeight; }
+resize(); window.addEventListener("resize", resize);
+
+// Fonction pour trouver une case vide pour spawn
+function findEmptyTile() {
+  for(let y = 0; y < rows; y++){
+    for(let x = 0; x < cols; x++){
+      if(map[y][x] === 0){ return { x: x+0.5, y: y+0.5 }; }
+    }
+  }
+  return { x: 2.5, y: 1.5 };
+}
+
+// Player
+const spawn = findEmptyTile();
+const player = { x: spawn.x, y: spawn.y, r: 0.3, speed: 4.2 };
+let keys = {}, enemy = null, enemySpeed = 6.0, enemyRadius = 0.38;
+let enemyPath = [], imageShown = false, stamina = 1, drain = 1/4.5, regen = 0.15;
+let lastEnemyPos = { x:0, y:0 }, timeSinceMove = 0;
+
+const staminaBar = document.getElementById("staminaBar");
+const imageOverlay = document.getElementById("imageOverlay");
+const pressHint = document.getElementById("pressHint");
+const modal = document.getElementById("modal"), modalText = document.getElementById("modalText"), menuBtn = document.getElementById("menuBtn");
+menuBtn.onclick = () => window.location.href = "index.html";
+
+// Input
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// Fonctions
+function isSolid(x, y){ return x < 0 || y < 0 || x >= cols || y >= rows || map[y][x] === 1; }
+function canMove(nx, ny){
+  for(let yy = -player.r; yy <= player.r; yy += player.r)
+    for(let xx = -player.r; xx <= player.r; xx += player.r)
+      if(isSolid(Math.floor(nx+xx), Math.floor(ny+yy))) return false;
+  return true;
+}
+function findPath(s, e){
+  const d=[[1,0],[-1,0],[0,1],[0,-1]], q=[[s]], seen=new Set([`${s.x},${s.y}`]);
+  while(q.length){
+    const p = q.shift(), {x,y} = p.at(-1);
+    if(x===e.x && y===e.y) return p;
+    for(const [a,b] of d){
+      const nx = x+a, ny = y+b, k=`${nx},${ny}`;
+      if(!isSolid(nx,ny) && !seen.has(k)){ seen.add(k); q.push([...p,{x:nx,y:ny}]); }
+    }
+  }
+  return [];
+}
+function showImageOnce(px, py){
+  if(imageShown) return;
+  imageShown = true;
+  imageOverlay.style.display='flex';
+  setTimeout(()=>{
+    imageOverlay.style.display='none';
+    let ex, ey;
+    do { ex = Math.floor(Math.random()*cols); ey = Math.floor(Math.random()*rows); }
+    while(isSolid(ex,ey) || Math.hypot(ex-px, ey-py)<7);
+    enemy = { x: ex+0.5, y: ey+0.5 };
+  },3000);
+}
+
+// Update
+function update(dt){
+  let dx=0, dy=0;
+  if(keys['z']||keys['w']||keys['arrowup']) dy -= 1;
+  if(keys['s']||keys['arrowdown']) dy += 1;
+  if(keys['q']||keys['a']||keys['arrowleft']) dx -= 1;
+  if(keys['d']||keys['arrowright']) dx += 1;
+  if(dx && dy){ dx*=Math.SQRT1_2; dy*=Math.SQRT1_2; }
+  
+  const running = keys['shift'] && stamina > 0;
+  const spd = player.speed * (running ? 1.7 : 1);
+  stamina = Math.max(0, Math.min(1, stamina + (running ? -drain : regen) * dt));
+  staminaBar.style.width = `${stamina*100}%`;
+
+  const nx = player.x + dx*spd*dt, ny = player.y + dy*spd*dt;
+  if(canMove(nx, player.y)) player.x = nx;
+  if(canMove(player.x, ny)) player.y = ny;
+
+  const px = Math.floor(player.x), py = Math.floor(player.y);
+  if(map[py] && map[py][px] === 3){ showImageOnce(player.x, player.y); map[py][px]=0; }
+
+  // Enemy
+  if(enemy){
+    const dist = Math.hypot(player.x-enemy.x, player.y-enemy.y);
+    timeSinceMove += dt;
+    if(Math.hypot(enemy.x-lastEnemyPos.x, enemy.y-lastEnemyPos.y)>0.05){ timeSinceMove=0; lastEnemyPos={x:enemy.x,y:enemy.y}; }
+    if(enemyPath.length===0 || dist<3 || timeSinceMove>1 || Math.random()<0.3){
+      enemyPath = findPath({x:Math.floor(enemy.x),y:Math.floor(enemy.y)}, {x:px,y:py});
+      timeSinceMove=0;
+    }
+    if(enemyPath.length>1){
+      const t = enemyPath[1], tx=t.x+0.5, ty=t.y+0.5, dx=tx-enemy.x, dy=ty-enemy.y;
+      const d=Math.hypot(dx,dy);
+      if(d>0.02){
+        const newX=enemy.x+(dx/d)*enemySpeed*dt, newY=enemy.y+(dy/d)*enemySpeed*dt;
+        if(!isSolid(Math.floor(newX),Math.floor(newY))){ enemy.x=newX; enemy.y=newY; }
+        else if(!isSolid(Math.floor(enemy.x),Math.floor(newY))) enemy.y=newY;
+        else if(!isSolid(Math.floor(newX), Math.floor(enemy.y))) enemy.x=newX;
+      } else enemyPath.shift();
+    }
+    if(Math.hypot(player.x-enemy.x, player.y-enemy.y)<0.65){ location.reload(); }
+  }
+
+  // Texte
+  let nearText=false;
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++)
+    if(map[y][x]===2 && Math.hypot(player.x-(x+0.5), player.y-(y+0.5))<1.5) nearText=true;
+  pressHint.style.display = nearText ? 'block' : 'none';
+  if(nearText && keys['e']) { modal.style.display='flex'; modalText.textContent="Le code est 1---------"; enemy=null; enemyPath=[]; }
+}
+
+// Draw
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  const offX=c.width/2 - player.x*tile, offY=c.height/2 - player.y*tile;
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+    ctx.fillStyle = map[y][x]===1?"#d7c47a":"#c9b78a";
+    ctx.fillRect(offX+x*tile, offY+y*tile, tile, tile);
+  }
+  if(enemy){ ctx.beginPath(); ctx.fillStyle='red'; ctx.arc(offX+enemy.x*tile, offY+enemy.y*tile, enemyRadius*tile,0,Math.PI*2); ctx.fill(); }
+  ctx.beginPath(); ctx.fillStyle='white'; ctx.arc(offX+player.x*tile, offY+player.y*tile, player.r*tile,0,Math.PI*2); ctx.fill();
+}
+
+// Loop
+let last=0;
+function loop(t){ const dt=Math.min(0.05,(t-last)/1000); last=t; update(dt); draw(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
