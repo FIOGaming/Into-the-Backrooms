@@ -22,9 +22,47 @@ canvas{display:block;}
   border-radius:5px;
   display:none;
 }
+
+/* Intro overlay */
+#introOverlay{
+  position:fixed;
+  inset:0;
+  background:#000;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  z-index:1000;
+  flex-direction:column;
+  padding:20px;
+}
+#introOverlay p{
+  max-width:900px;
+  font-size:28px;
+  line-height:1.2;
+  margin:10px 0;
+}
+#startBtn{
+  margin-top:20px;
+  padding:12px 24px;
+  font-size:20px;
+  border-radius:6px;
+  border: none;
+  cursor:pointer;
+  background:#ffe800;
+  color:#000;
+}
 </style>
 </head>
 <body>
+
+<!-- Intro (fond noir avant le lancement) -->
+<div id="introOverlay">
+  <p>Vous avez assez d’oxygène, mais un monstre a réussi à vous suivre... Essayez de le fuir.</p>
+  <button id="startBtn">Commencer</button>
+</div>
+
 <canvas id="gameCanvas"></canvas>
 <button id="restartBtn" class="ui-button">Recommencer</button>
 <button id="menuBtn" class="ui-button">Menu</button>
@@ -42,8 +80,9 @@ let obstacles = [];
 let score = 0;
 let gameOver = false;
 let gameWin = false;
+let gameStarted = false;
 let lastObstacleX = 0;
-let minGap = 0.5; // ⚡ Obstacles ultra rapprochés !
+let minGap = 0.5;
 
 const player = {
   x: 150,
@@ -98,7 +137,6 @@ function drawMonster(){
 
 function drawBackground(){
   const offset = Math.sin(Date.now()/150)*15;
-
   const ceilingGrad = ctx.createLinearGradient(0,0,0,100);
   ceilingGrad.addColorStop(0,"#f3e5ab");
   ceilingGrad.addColorStop(1,"#e6d38b");
@@ -176,7 +214,7 @@ function winGame(){
   ctx.textAlign="center";
   ctx.fillText("Vous avez survécu au couloir !", canvas.width/2, canvas.height/2-80);
   ctx.font="35px Arial";
-  ctx.fillText("Le code est -6--------", canvas.width/2, canvas.height/2 - 20);
+  ctx.fillText("Le code est -6----", canvas.width/2, canvas.height/2 - 20);
 }
 
 function circleRectCollision(circle, rect){
@@ -192,7 +230,7 @@ function circleRectCollision(circle, rect){
 }
 
 function update(){
-  if(gameOver || gameWin) return;
+  if(!gameStarted || gameOver || gameWin) return;
 
   gameSpeed = baseSpeed + Math.floor(score / 500);
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -214,7 +252,6 @@ function update(){
 
   obstacles.forEach((obs,index)=>{
     obs.x -= gameSpeed;
-
     if(circleRectCollision(player,obs)){
         if(obs.type === "low") {
             if(player.y + player.radius > obs.y) {
@@ -250,12 +287,16 @@ function update(){
   score++;
   drawScore();
 
-  if(score>=2000) winGame();
+  // ✅ Victoire à 5000 points
+  if(score >= 5000){
+      winGame();
+  }
 
   requestAnimationFrame(update);
 }
 
 document.addEventListener("keydown",(e)=>{
+  if(!gameStarted) return;
   if((e.code==="Space"||e.code==="ArrowUp"||e.key.toLowerCase()==="z") && !player.jumping && !player.crouching){
     player.jumping=true;
     player.dy=-14;
@@ -270,6 +311,7 @@ document.addEventListener("keydown",(e)=>{
 });
 
 document.addEventListener("keyup",(e)=>{
+  if(!gameStarted) return;
   if((e.code==="ArrowDown"||e.key.toLowerCase()==="s") && player.crouching){
     player.crouching=false;
     player.radius=25;
@@ -279,8 +321,11 @@ document.addEventListener("keyup",(e)=>{
 
 document.getElementById("restartBtn").addEventListener("click",()=>location.reload());
 document.getElementById("menuBtn").addEventListener("click",()=>window.location.href="index.html");
-
-update();
+document.getElementById("startBtn").addEventListener("click",()=>{
+  document.getElementById("introOverlay").style.display="none";
+  gameStarted=true;
+  update();
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Backrooms — Questionnaire</title>
+  <style>
+    :root{--bg:#0b0b0b;--card:#f7f1c9;--accent:#e6d07a}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;background:#000;color:#111;overflow:hidden}
+    .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:32px;}
+    .card{width:100%;max-width:760px;background:linear-gradient(180deg, rgba(247,241,201,0.97), rgba(230,208,122,0.9));border-radius:12px;padding:28px;box-shadow:0 12px 30px rgba(0,0,0,0.6);}
+    h1{margin:0 0 10px;font-size:28px}
+    .q{display:none;margin:18px 0;padding:12px;background:rgba(255,255,255,0.06);border-radius:8px}
+    label{display:block;cursor:pointer;padding:6px 8px;border-radius:6px}
+    input[type=radio]{margin-right:8px}
+    .row{display:flex;flex-direction:column;gap:8px;}
+    .range-wrap{display:flex;align-items:center;gap:12px}
+    input[type=range]{width:100%}
+    .small{font-size:13px;color:#222}
+    .btn{display:inline-block;margin-top:10px;padding:10px 16px;border-radius:8px;background:#111;color:var(--card);cursor:pointer;border:none}
+    .muted{color:#333;font-size:13px}
+
+    .bug-root{height:100vh;width:100vw;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#fff;overflow:hidden;position:relative;}
+    .bug-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:shake 0.5s infinite;transition:opacity 1s ease-in-out;}
+    .bug-text{position:absolute;bottom:15%;text-align:center;width:100%;font-size:24px;line-height:1.4;color:#fff;opacity:0;transition:opacity 1.5s ease-in-out;}
+    .menu-btn{position:absolute;bottom:5%;left:50%;transform:translateX(-50%);padding:12px 20px;border:none;border-radius:8px;background:#e6d07a;color:#000;font-weight:bold;cursor:pointer;opacity:0;transition:opacity 1.5s ease-in-out;}
+
+    @keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-5px,3px)}50%{transform:translate(4px,-2px)}75%{transform:translate(-3px,4px)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" id="quiz">
+      <h1>Backrooms — Questionnaire</h1>
+      <p class="muted">Réponds... si tu oses.</p>
+
+      <section class="q" id="q1" style="display:block">
+        <strong>1. Sur quel niveau tu galère ?</strong>
+        <div class="row">
+          <label><input type="radio" name="niveau" value="bouteilles"> a. Les bouteilles</label>
+          <label><input type="radio" name="niveau" value="couloir"> b. Le couloir</label>
+          <label><input type="radio" name="niveau" value="jaune"> c. La salle jaune</label>
+        </div>
+      </section>
+
+      <section class="q" id="q2">
+        <strong>2. Combien de temps as tu passé sur ce niveau ?</strong>
+        <div class="range-wrap">
+          <input type="range" id="duree" min="0" max="240" value="30">
+          <div class="small"><span id="dureeVal">30</span> minutes</div>
+        </div>
+        <button class="btn next">Suivant</button>
+      </section>
+
+      <section class="q" id="q3">
+        <strong>3. Tu es sûr de vouloir un indice ?</strong>
+        <div class="row">
+          <label><input type="radio" name="indice" value="oui"> a. Oui</label>
+          <label><input type="radio" name="indice" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q4">
+        <strong>4. Complètement sûr ?</strong>
+        <div class="row">
+          <label><input type="radio" name="sûr1" value="oui"> a. Oui</label>
+          <label><input type="radio" name="sûr1" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q5">
+        <strong>5. 100% sûr ?</strong>
+        <div class="row">
+          <label><input type="radio" name="sûr2" value="oui"> a. Oui</label>
+          <label><input type="radio" name="sûr2" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q6">
+        <strong>6. Mmmh est ce que tu le mérites ?</strong>
+        <div class="row">
+          <label><input type="radio" name="merites" value="oui"> a. Oui</label>
+          <label><input type="radio" name="merites" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q7">
+        <strong>7. Je suis la meilleure personne du monde ?</strong>
+        <div class="row">
+          <label><input type="radio" name="best" value="oui"> a. Oui</label>
+          <label><input type="radio" name="best" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q8">
+        <strong>8. Bon laisse moi réfléchir........... Encore............. Un peu plus.......... Non !</strong>
+        <div class="row">
+          <label><input type="radio" name="reflechir" value="oui"> a. Oui</label>
+          <label><input type="radio" name="reflechir" value="non"> b. Non</label>
+        </div>
+      </section>
+
+      <section class="q" id="q9">
+        <strong>9. Mais si je te l'accorde.</strong>
+        <div class="row">
+          <button class="btn" id="okBtn">a. OK</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const questions = document.querySelectorAll('.q');
+    
+    questions.forEach((q, i) => {
+      q.addEventListener('change', () => {
+        if (i < questions.length - 1) {
+          q.style.display = 'none';
+          questions[i + 1].style.display = 'block';
+        }
+      });
+    });
+
+    const duree = document.getElementById('duree');
+    const dureeVal = document.getElementById('dureeVal');
+    duree.addEventListener('input', ()=> dureeVal.textContent = duree.value);
+    document.querySelector('#q2 .next').addEventListener('click', ()=>{
+      document.getElementById('q2').style.display='none';
+      document.getElementById('q3').style.display='block';
+    });
+
+    document.getElementById('okBtn').addEventListener('click', startBug);
+
+    function startBug(){
+      document.body.innerHTML = `
+        <div class='bug-root'>
+          <img class='bug-image' id='img1' src='https://images.bfmtv.com/wfZCRE9QMsAsAjAfvBAyCw1Ipb4=/0x0:1920x1080/1920x0/images/Les-Backrooms-une-legende-urbaine-d-internet-1873456.jpg'>
+          <img class='bug-image' id='img2' src='https://www.horreur.quebec/wp-content/plugins/wp-youtube-lyte/lyteCache.php?origThumbUrl=https%3A%2F%2Fi.ytimg.com%2Fvi%2FH4dGpz6cnHo%2F0.jpg'>
+          <img class='bug-image' id='img3' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsdipbxrMwIpr_ToejXbIc23uDYA2JxkyQyA&s'>
+          <div class='bug-text' id='bugText'>T'es bête ou quoi. C'est pas si simple. Allez vas faire les mini jeux comme tout le monde. Débile !</div>
+          <button class='menu-btn' id='menuBtn' onclick="window.location.href='index.html'">Retour au menu</button>
+        </div>`;
+
+      const imgs = [document.getElementById('img1'), document.getElementById('img2'), document.getElementById('img3')];
+      let i = 0;
+      const showNext = () => {
+        if (i > 0) imgs[i-1].style.opacity = 0;
+        if (i < imgs.length) {
+          imgs[i].style.opacity = 1;
+          i++;
+          setTimeout(showNext, 2000);
+        } else {
+          setTimeout(()=>{
+            document.getElementById('bugText').style.opacity = 1;
+            document.getElementById('menuBtn').style.opacity = 1;
+          }, 1500);
+        }
+      }
+      showNext();
+    }
+  </script>
+</body>
+</html>
