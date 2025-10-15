@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backrooms Escape - Version Pro</title>
+<style>
+* {margin:0;padding:0;box-sizing:border-box;}
+body {background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;}
+#gameCanvas {display:block;background:#000;}
+.hud {
+  position:fixed;top:15px;left:15px;z-index:10;
+}
+.bar-container {margin-bottom:8px;width:250px;}
+.bar-label {font-size:14px;color:#ccc;}
+.bar {height:18px;background:#222;border-radius:10px;overflow:hidden;border:2px solid #444;}
+.bar-fill {height:100%;transition:width .3s;}
+.stamina {background:linear-gradient(90deg,#66b3ff,#0055cc);}
+.noise {background:linear-gradient(90deg,#00ff00,#ffff00,#ff0000);}
+.battery {background:linear-gradient(90deg,#00ff00,#ffaa00,#ff0000);}
+.inventory {
+  position:fixed;top:15px;right:15px;background:rgba(0,0,0,0.8);
+  padding:12px 15px;border-radius:8px;font-size:14px;z-index:10;
+}
+.minimap {
+  position:fixed;bottom:15px;right:15px;background:rgba(0,0,0,0.8);
+  border:2px solid #555;border-radius:6px;width:200px;height:150px;z-index:10;
+}
+.controls {
+  position:fixed;bottom:15px;left:15px;font-size:12px;color:#aaa;
+}
+#pickupHint {
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.8);padding:8px 16px;border-radius:8px;font-size:14px;display:none;
+}
+#gameOver {
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.9);padding:40px;text-align:center;border-radius:15px;display:none;z-index:20;
+}
+.btn {
+  background:#66b3ff;border:none;color:#fff;padding:10px 20px;border-radius:6px;margin:8px;cursor:pointer;font-size:16px;
+}
+.btn:hover {background:#0055cc;}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<div class="hud">
+  <div class="bar-container"><div class="bar-label">Endurance</div>
+    <div class="bar"><div id="staminaBar" class="bar-fill stamina" style="width:100%"></div></div>
+  </div>
+  <div class="bar-container"><div class="bar-label">Bruit</div>
+    <div class="bar"><div id="noiseBar" class="bar-fill noise" style="width:0%"></div></div>
+  </div>
+  <div class="bar-container" id="batteryContainer" style="display:none;"><div class="bar-label">Batterie Lampe</div>
+    <div class="bar"><div id="batteryBar" class="bar-fill battery" style="width:100%"></div></div>
+  </div>
+</div>
+
+<div class="inventory">
+  <div>Inventaire :</div>
+  <div id="inventoryItems">(vide)</div>
+  <div style="font-size:12px;margin-top:5px;">F: Lampe | R: Piège | E: Ramasser</div>
+</div>
+
+<div class="minimap">
+  <canvas id="minimapCanvas" width="200" height="150"></canvas>
+</div>
+
+<div class="controls">ZQSD / Flèches = déplacement<br>Shift = courir</div>
+<div id="pickupHint">Appuyer sur E pour ramasser</div>
+
+<div id="gameOver">
+  <h2 id="gameOverTitle">Game Over</h2>
+  <p id="gameOverMessage">Vous avez été attrapé !</p>
+  <button class="btn" id="restartBtn">Recommencer</button>
+  <button class="btn" id="menuBtn" style="display:none;">Menu</button>
+</div>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const minimap=document.getElementById('minimapCanvas');
+const mctx=minimap.getContext('2d');
+
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+
+const TILE=35, MAP_W=80, MAP_H=60;
+let map=[], lit=[], items=[], monsters=[], traps=[], door={}, keys={}, player={x:0,y:0,r:12,speed:120,run:200,stamina:100,noise:0,battery:100,hasFlash:false,flashOn:false,traps:0};
+let cam={x:0,y:0}, game='play';
+function init(){
+  genMap(); placeDoor(); placeItems(); spawnMonsters();
+  player.x=TILE*2; player.y=TILE*2;
+}
+function genMap(){
+  map=[]; lit=[];
+  for(let y=0;y<MAP_H;y++){map[y]=[];lit[y]=[];
+    for(let x=0;x<MAP_W;x++){
+      if(x==0||y==0||x==MAP_W-1||y==MAP_H-1) map[y][x]=1;
+      else map[y][x]=Math.random()<0.2?1:0;
+      lit[y][x]=Math.random()<0.1;
+    }
+  }
+}
+function placeDoor(){
+  let x,y; do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);
+  door={x:x*TILE+TILE/2,y:y*TILE+TILE/2};
+}
+function placeItems(){
+  items=[];
+  const types=['flash','energy','battery','trap'];
+  for(let i=0;i<35;i++){
+    let x,y; do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);
+    const type=types[Math.floor(Math.random()*types.length)];
+    items.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,type,col:false});
+  }
+}
+function spawnMonsters(){
+  monsters=[];
+  for(let i=0;i<3;i++){
+    let x,y; do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);
+    monsters.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,r:15,speed:60,stun:0});
+  }
+  monsters.push({x:door.x+60,y:door.y+60,r:18,speed:50,stun:0});
+}
+
+/* CONTROLES */
+document.addEventListener('keydown',e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.key.toLowerCase()==='e') collect();
+  if(e.key.toLowerCase()==='f') toggleFlash();
+  if(e.key.toLowerCase()==='r') dropTrap();
+});
+document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+/* GAME LOOP */
+let last=0;
+function loop(t){
+  const dt=(t-last)/1000; last=t;
+  if(game==='play') update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* UPDATE */
+function wall(x,y){const mx=Math.floor(x/TILE),my=Math.floor(y/TILE);return map[my]&&map[my][mx]==1;}
+function update(dt){
+  let dx=0,dy=0;
+  if(keys['z']||keys['arrowup']||keys['w'])dy-=1;
+  if(keys['s']||keys['arrowdown'])dy+=1;
+  if(keys['q']||keys['arrowleft']||keys['a'])dx-=1;
+  if(keys['d']||keys['arrowright'])dx+=1;
+  if(dx||dy){
+    const len=Math.hypot(dx,dy);dx/=len;dy/=len;
+    const run=keys['shift']&&player.stamina>0;
+    const spd=run?player.run:player.speed;
+    const nx=player.x+dx*spd*dt, ny=player.y+dy*spd*dt;
+    if(!wall(nx,player.y))player.x=nx;
+    if(!wall(player.x,ny))player.y=ny;
+    if(run){player.stamina-=40*dt;player.noise+=70*dt;} else player.stamina+=25*dt;
+  } else player.noise-=40*dt;
+  player.stamina=Math.max(0,Math.min(100,player.stamina));
+  player.noise=Math.max(0,Math.min(100,player.noise));
+  if(player.flashOn){player.battery-=15*dt;if(player.battery<=0){player.flashOn=false;}}
+  updateMonsters(dt);
+  check();
+  cam.x=player.x-canvas.width/2; cam.y=player.y-canvas.height/2;
+  cam.x=Math.max(0,Math.min(cam.x,MAP_W*TILE-canvas.width));
+  cam.y=Math.max(0,Math.min(cam.y,MAP_H*TILE-canvas.height));
+  updateHUD();
+}
+function updateMonsters(dt){
+  for(let m of monsters){
+    if(m.stun>0){m.stun-=dt;continue;}
+    const dist=Math.hypot(m.x-player.x,m.y-player.y);
+    if(dist<150+player.noise*2){
+      const dx=(player.x-m.x)/dist,dy=(player.y-m.y)/dist;
+      const spd=m.speed*(player.noise>50?1.8:1);
+      const mx=dx*spd*dt,my=dy*spd*dt;
+      if(!wall(m.x+mx,m.y))m.x+=mx;
+      if(!wall(m.x,m.y+my))m.y+=my;
+    }
+  }
+}
+function updateHUD(){
+  document.getElementById('staminaBar').style.width=player.stamina+'%';
+  document.getElementById('noiseBar').style.width=player.noise+'%';
+  if(player.hasFlash){document.getElementById('batteryContainer').style.display='block';document.getElementById('batteryBar').style.width=player.battery+'%';}
+  let inv='';if(player.hasFlash)inv+='Lampe ';if(player.traps>0)inv+=`Pièges:${player.traps}`;if(!inv)inv='(vide)';
+  document.getElementById('inventoryItems').textContent=inv;
+  let near=false;for(let i of items){if(!i.col&&Math.hypot(i.x-player.x,i.y-player.y)<30){near=true;break;}}
+  document.getElementById('pickupHint').style.display=near?'block':'none';
+}
+function collect(){
+  for(let i of items){if(!i.col&&Math.hypot(i.x-player.x,i.y-player.y)<30){
+    i.col=true;
+    if(i.type==='flash'){player.hasFlash=true;}
+    if(i.type==='energy'){player.stamina=Math.min(100,player.stamina+40);}
+    if(i.type==='battery'&&player.hasFlash){player.battery=Math.min(100,player.battery+50);}
+    if(i.type==='trap')player.traps++;
+  }}
+}
+function toggleFlash(){if(player.hasFlash&&player.battery>0)player.flashOn=!player.flashOn;}
+function dropTrap(){if(player.traps>0){traps.push({x:player.x,y:player.y,r:12});player.traps--;}}
+function check(){
+  for(let m of monsters){if(Math.hypot(m.x-player.x,m.y-player.y)<m.r+player.r)return gameOver();}
+  if(Math.hypot(door.x-player.x,door.y-player.y)<20)return win();
+  for(let t of traps){for(let m of monsters){if(Math.hypot(t.x-m.x,t.y-m.y)<t.r+m.r){m.stun=4;}}}
+}
+
+/* GAME STATES */
+function gameOver(){game='end';document.getElementById('gameOver').style.display='block';document.getElementById('gameOverTitle').textContent='Game Over';document.getElementById('gameOverMessage').textContent='Attrapé par un monstre !';}
+function win(){game='end';document.getElementById('gameOver').style.display='block';document.getElementById('gameOverTitle').textContent='Victoire !';document.getElementById('gameOverMessage').textContent='Le code est ---9--';document.getElementById('menuBtn').style.display='inline-block';document.getElementById('restartBtn').style.display='none';}
+document.getElementById('restartBtn').onclick=()=>location.reload();
+document.getElementById('menuBtn').onclick=()=>alert('Retour au menu (index.html)');
+
+/* RENDER */
+function render(){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
+  const sx=Math.floor(cam.x/TILE),sy=Math.floor(cam.y/TILE);
+  const ex=Math.min(MAP_W,Math.ceil((cam.x+canvas.width)/TILE));
+  const ey=Math.min(MAP_H,Math.ceil((cam.y+canvas.height)/TILE));
+  for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++){
+    const scrX=x*TILE-cam.x,scrY=y*TILE-cam.y;
+    ctx.fillStyle=map[y][x]===1?'#333':(lit[y][x]?'#c9c16a':'#555');
+    ctx.fillRect(scrX,scrY,TILE,TILE);
+  }
+  // objets
+  for(let i of items){if(i.col)continue;const x=i.x-cam.x,y=i.y-cam.y;
+    if(i.type==='flash'){ctx.fillStyle='#ffee88';ctx.beginPath();ctx.arc(x,y,6,0,2*Math.PI);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(x-2,y-10,4,6);}
+    if(i.type==='energy'){ctx.fillStyle='#44ff44';ctx.fillRect(x-5,y-10,10,20);}
+    if(i.type==='battery'){ctx.fillStyle='#00ffff';ctx.fillRect(x-6,y-6,12,12);}
+    if(i.type==='trap'){ctx.strokeStyle='#ff5500';ctx.strokeRect(x-8,y-8,16,16);}
+  }
+  // pièges
+  ctx.strokeStyle='#ff8800';for(let t of traps){ctx.beginPath();ctx.arc(t.x-cam.x,t.y-cam.y,t.r,0,2*Math.PI);ctx.stroke();}
+  // porte
+  ctx.fillStyle='#999900';ctx.fillRect(door.x-cam.x-10,door.y-cam.y-20,20,40);
+  // monstres
+  for(let m of monsters){ctx.fillStyle=m.stun>0?'#888':'#ff2222';ctx.beginPath();ctx.arc(m.x-cam.x,m.y-cam.y,m.r,0,2*Math.PI);ctx.fill();}
+  // joueur
+  ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(player.x-cam.x,player.y-cam.y,player.r,0,2*Math.PI);ctx.fill();
+  // lampe
+  if(player.flashOn){ctx.save();ctx.globalAlpha=0.15;const grad=ctx.createRadialGradient(player.x-cam.x,player.y-cam.y,0,player.x-cam.x,player.y-cam.y,150);grad.addColorStop(0,'rgba(255,255,150,0.9)');grad.addColorStop(1,'transparent');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(player.x-cam.x,player.y-cam.y,150,0,2*Math.PI);ctx.fill();ctx.restore();}
+  // minimap
+  drawMini();
+}
+function drawMini(){
+  const scale=2;
+  mctx.fillStyle='#000';mctx.fillRect(0,0,minimap.width,minimap.height);
+  for(let m of monsters){mctx.fillStyle='#ff3333';mctx.fillRect(m.x/(MAP_W*TILE)*minimap.width,m.y/(MAP_H*TILE)*minimap.height,4,4);}
+  mctx.fillStyle='#ffffff';mctx.fillRect(player.x/(MAP_W*TILE)*minimap.width,player.y/(MAP_H*TILE)*minimap.height,4,4);
+  mctx.fillStyle='#ffff00';mctx.fillRect(door.x/(MAP_W*TILE)*minimap.width,door.y/(MAP_H*TILE)*minimap.height,4,4);
+}
+
+init();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
