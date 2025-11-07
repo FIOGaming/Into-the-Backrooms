@@ -199,6 +199,13 @@
       80% { background: #000; opacity: 1; }
       100% { opacity: 0; }
     }
+	
+ .games {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 40px;
+}
   </style>
 </head>
 <body>
@@ -227,7 +234,6 @@
         <p>La salle jaune</p>
       </a>
     </div>
-  </section>
   
       <div class="game">
       <a href="1.html">
@@ -235,7 +241,7 @@
         <p>Les aveugles</p>
       </a>
     </div>
-
+  </section>
   <!-- === Boutons === -->
   <div class="wrap">
     <button class="btn" id="openBtn">Code</button>
