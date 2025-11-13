@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintenance en cours...</title>
+<title>Jeu non ouvert...</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -212,32 +212,32 @@ footer{
 <div class="light-flicker"></div>
 
 <div class="container">
-  <h1 data-text="Maintenance en cours...">Maintenance en cours...</h1>
-  <p>Vous semblez avoir accédé à un niveau supprimé.<br>Veuillez patienter avant la réinitialisation du système.</p>
+  <h1 data-text="Jeu non ouvert...">Jeu non ouvert...</h1>
+  <p>Vous semblez avoir accédé à un niveau supprimé.<br>Veuillez patienter avant le lancement du système.</p>
 
-  <div class="counter" id="counter">Reprise dans 00:00:00</div>
+  <div class="counter" id="counter">Ouverture dans 00:00:00:00</div>
 
-  <a href="https://discord.gg/SkRF8HqmQt" target="_blank" class="contact-btn">Contacter le support</a>
-  <footer>© 2025 — Erreur 666 : Site en Maintenance</footer>
+  <a href="https://discord.gg/6g6zmYcxdU" target="_blank" class="contact-btn">Contacter le support</a>
+  <footer><br>© 2025 — Erreur 666 : Ouverture en attente...</footer>
 </div>
 
 <script>
-// Compteur Backrooms
-const targetDate = new Date("2025-11-13T20:00:00").getTime();
+const targetDate = new Date("2025-12-01T00:00:00").getTime();
 function updateCounter(){
   const now = new Date().getTime();
   const distance = targetDate - now;
   if(distance <= 0){ window.location.href="index1.html"; return; }
-  const hours=String(Math.floor((distance%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
-  const minutes=String(Math.floor((distance%(1000*60*60))/(1000*60))).padStart(2,'0');
-  const seconds=String(Math.floor((distance%(1000*60))/1000)).padStart(2,'0');
-  document.getElementById("counter").textContent=`Reprise dans ${hours}:${minutes}:${seconds}`;
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+  const minutes = String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+  const seconds = String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0');
+
+  document.getElementById("counter").textContent = `Ouverture dans ${days}:${hours}:${minutes}:${seconds}`;
 }
 updateCounter();
-setInterval(updateCounter,1000);
+setInterval(updateCounter, 1000);
 </script>
 
 </body>
 </html>
-
-

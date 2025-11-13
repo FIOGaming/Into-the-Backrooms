@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backrooms Ultimate</title>
+<title>Les Bouteilles</title>
 <style>
 body { margin:0; overflow:hidden; background:#111; font-family:'Courier New', monospace; }
 canvas { display:block; }
@@ -18,7 +18,7 @@ button { margin-top:20px; padding:10px 20px; font-size:20px; cursor:pointer; }
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
-<div id="hud">Bouteilles: 0 | Health: 100</div>
+<div id="hud">Bouteilles de gaz : 0 | Health: 100</div>
 <div id="overlay">
   <div id="overlayText"></div>
   <button id="overlayBtn"></button>
@@ -54,6 +54,14 @@ let chunks = {};
 let monsters = [];
 let gameOver = false;
 let gameWon = false;
+
+// --- Chargement des images ---
+const imgPlayer = new Image();
+imgPlayer.src = "Guy.png";
+const imgMonster = new Image();
+imgMonster.src = "Monster.png";
+const imgBottle = new Image();
+imgBottle.src = "Bottle.png";
 
 function mod(n, m) { return ((n % m) + m) % m; }
 
@@ -176,8 +184,8 @@ function movePlayer(dx, dy){
 
 // --- DESSIN
 function drawTile(tile,x,y){
-    if(tile===1) ctx.fillStyle = '#FFD966'; // murs vifs
-    else ctx.fillStyle = '#F9E79F';         // sol lumineux
+    if(tile===1) ctx.fillStyle = '#FFD966';
+    else ctx.fillStyle = '#F9E79F';
     ctx.fillRect(x,y,tileSize,tileSize);
 }
 
@@ -202,10 +210,21 @@ function drawMap(){
     }
 }
 
-function drawPlayer(){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,playerRadius*tileSize,0,Math.PI*2); ctx.fill(); }
-function drawMonsters(){ ctx.fillStyle='#f00'; monsters.forEach(m=>{ const sx=canvas.width/2+(m.x-player.x)*tileSize; const sy=canvas.height/2+(m.y-player.y)*tileSize; ctx.beginPath(); ctx.arc(sx,sy,playerRadius*tileSize,0,Math.PI*2); ctx.fill(); }); }
+function drawPlayer(){
+    const size = playerRadius * tileSize * 2;
+    ctx.drawImage(imgPlayer, canvas.width/2 - size/2, canvas.height/2 - size/2, size, size);
+}
+
+function drawMonsters(){
+    monsters.forEach(m=>{
+        const sx=canvas.width/2+(m.x-player.x)*tileSize;
+        const sy=canvas.height/2+(m.y-player.y)*tileSize;
+        const size = playerRadius * tileSize * 2;
+        ctx.drawImage(imgMonster, sx - size/2, sy - size/2, size, size);
+    });
+}
+
 function drawBottles(){
-    ctx.fillStyle='#ff0';
     const startChunkX=Math.floor(player.x/chunkSize)-viewDistance;
     const startChunkY=Math.floor(player.y/chunkSize)-viewDistance;
     const endChunkX=Math.floor(player.x/chunkSize)+viewDistance;
@@ -225,7 +244,8 @@ function drawBottles(){
                         }
                         const sx=canvas.width/2+(gx-player.x)*tileSize;
                         const sy=canvas.height/2+(gy-player.y)*tileSize;
-                        ctx.beginPath(); ctx.arc(sx,sy,playerRadius*tileSize,0,Math.PI*2); ctx.fill();
+                        const size = playerRadius * tileSize * 2;
+                        ctx.drawImage(imgBottle, sx - size/2, sy - size/2, size, size);
                     }
                 }
             }
@@ -251,8 +271,8 @@ function triggerGameOver(){
 }
 function triggerWin(){
     gameWon=true;
-    overlayText.innerText="Vous avez assez de bouteilles\nLe code est --8-------";
-    overlayBtn.innerText="Menu";
+    overlayText.innerText="Vous avez assez de bouteilles\nLe code est --8";
+    overlayBtn.innerText="Retour au menu";
     overlayBtn.onclick=()=> location.href="index.html";
     overlay.style.display="flex";
 }

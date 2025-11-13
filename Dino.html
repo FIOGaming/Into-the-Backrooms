@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Backrooms Runner</title>
+<title>Le Couloir</title>
 <style>
 body {
   margin:0;
@@ -65,7 +65,7 @@ canvas{display:block;}
 
 <canvas id="gameCanvas"></canvas>
 <button id="restartBtn" class="ui-button">Recommencer</button>
-<button id="menuBtn" class="ui-button">Menu</button>
+<button id="menuBtn" class="ui-button">Retour au menu</button>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
@@ -91,16 +91,20 @@ const player = {
   dy:0,
   jumping:false,
   crouching:false,
-  color:"#ffffff"
 };
 
 const monster = {
   x:50,
   y:canvas.height-50,
   radius:25,
-  color:"#ff0000",
   speed:2
 };
+
+// --- Chargement des images ---
+const imgPlayer = new Image();
+imgPlayer.src = "Guy.png";
+const imgMonster = new Image();
+imgMonster.src = "Monster.png";
 
 function createObstacle(){
   const type = Math.random() <0.5 ? "low":"high";
@@ -122,17 +126,13 @@ function createObstacle(){
 }
 
 function drawPlayer(){
-  ctx.fillStyle=player.color;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius,0,Math.PI*2);
-  ctx.fill();
+  const size = player.radius*2;
+  ctx.drawImage(imgPlayer, player.x - size/2, player.y - size/2, size, size);
 }
 
 function drawMonster(){
-  ctx.fillStyle=monster.color;
-  ctx.beginPath();
-  ctx.arc(monster.x, monster.y, monster.radius,0,Math.PI*2);
-  ctx.fill();
+  const size = monster.radius*2;
+  ctx.drawImage(imgMonster, monster.x - size/2, monster.y - size/2, size, size);
 }
 
 function drawBackground(){
@@ -214,7 +214,7 @@ function winGame(){
   ctx.textAlign="center";
   ctx.fillText("Vous avez survécu au couloir !", canvas.width/2, canvas.height/2-80);
   ctx.font="35px Arial";
-  ctx.fillText("Le code est -6----", canvas.width/2, canvas.height/2 - 20);
+  ctx.fillText("Le code est -6-", canvas.width/2, canvas.height/2 - 20);
 }
 
 function circleRectCollision(circle, rect){
@@ -287,7 +287,6 @@ function update(){
   score++;
   drawScore();
 
-  // ✅ Victoire à 5000 points
   if(score >= 5000){
       winGame();
   }

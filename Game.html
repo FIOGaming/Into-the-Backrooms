@@ -173,7 +173,7 @@ function update(dt){
   for(let y=0;y<rows;y++) for(let x=0;x<cols;x++)
     if(map[y][x]===2 && Math.hypot(player.x-(x+0.5), player.y-(y+0.5))<1.5) nearText=true;
   pressHint.style.display = nearText ? 'block' : 'none';
-  if(nearText && keys['e']) { modal.style.display='flex'; modalText.textContent="Le code est 1---------"; enemy=null; enemyPath=[]; }
+  if(nearText && keys['e']) { modal.style.display='flex'; modalText.textContent="Le code est 1--"; enemy=null; enemyPath=[]; }
 }
 
 // Draw
