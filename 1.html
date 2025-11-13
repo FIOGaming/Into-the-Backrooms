@@ -1,155 +1,244 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backrooms Escape - Version Sprites</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Backrooms — Énigme du Couloir Fibonacci</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;}
-#gameCanvas{display:block;background:#000;}
-.hud{position:fixed;top:15px;left:15px;z-index:10;}
-.bar-container{margin-bottom:8px;width:250px;}
-.bar-label{font-size:14px;color:#ccc;}
-.bar{height:18px;background:#222;border-radius:10px;overflow:hidden;border:2px solid #444;}
-.bar-fill{height:100%;transition:width .3s;}
-.stamina{background:linear-gradient(90deg,#66b3ff,#0055cc);}
-.noise{background:linear-gradient(90deg,#00ff00,#ffff00,#ff0000);}
-.battery{background:linear-gradient(90deg,#00ff00,#ffaa00,#ff0000);}
-.inventory{position:fixed;top:15px;right:15px;background:rgba(0,0,0,0.8);padding:12px 15px;border-radius:8px;font-size:14px;z-index:10;}
-.minimap{position:fixed;bottom:15px;right:15px;background:rgba(0,0,0,0.8);border:2px solid #555;border-radius:6px;width:200px;height:150px;z-index:10;}
-.controls{position:fixed;bottom:15px;left:15px;font-size:12px;color:#aaa;}
-#pickupHint{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);padding:8px 16px;border-radius:8px;font-size:14px;display:none;}
-#gameOver{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:40px;text-align:center;border-radius:15px;display:none;z-index:20;}
-.btn{background:#66b3ff;border:none;color:#fff;padding:10px 20px;border-radius:6px;margin:8px;cursor:pointer;font-size:16px;}
-.btn:hover{background:#0055cc;}
+  html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    font-family:"Inter",sans-serif;
+    background:#000;
+    overflow:hidden;
+    color:#fff;
+  }
+
+  /* -------- BACKGROUND COULOIR -------- */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:url('https://images.unsplash.com/photo-1581091215367-59ab6b4b1c7e?auto=format&fit=crop&w=1600&q=80') center center / cover no-repeat;
+    filter:brightness(0.8) saturate(1.1) blur(1px);
+    transform:scale(1.02);
+  }
+
+  /* Overlays */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at center, rgba(255,255,180,0.1) 0%, rgba(0,0,0,0.8) 90%);
+    mix-blend-mode:multiply;
+    pointer-events:none;
+  }
+
+  /* -------- CONTAINER -------- */
+  .container{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    text-align:center;
+    padding:20px;
+  }
+
+  h1{
+    font-size:2.4rem;
+    color:#fffbe0;
+    text-shadow:0 0 20px rgba(255,255,180,0.7);
+    margin-bottom:20px;
+    letter-spacing:1px;
+  }
+
+  /* -------- NEONS -------- */
+  .neon-strip{
+    width:80%;
+    max-width:900px;
+    height:80px;
+    display:flex;
+    justify-content:space-evenly;
+    align-items:center;
+    margin-bottom:40px;
+  }
+
+  .bulb{
+    width:50px;
+    height:50px;
+    border-radius:12px;
+    background:#444;
+    box-shadow:inset 0 -6px 10px rgba(0,0,0,0.4);
+    transition:all 0.15s ease;
+  }
+
+  .bulb.on{
+    background:#fffde6;
+    box-shadow:0 0 30px 10px rgba(255,255,200,0.8);
+  }
+
+  /* -------- QUESTION -------- */
+  .question{
+    font-size:1.5rem;
+    color:#fff;
+    margin-bottom:12px;
+    text-shadow:0 0 10px rgba(255,255,150,0.6);
+  }
+
+  input[type="number"]{
+    padding:10px 14px;
+    font-size:1.2rem;
+    border-radius:8px;
+    border:none;
+    outline:none;
+    background:rgba(255,255,230,0.2);
+    color:#fff;
+    width:140px;
+    text-align:center;
+    margin-bottom:16px;
+  }
+
+  button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:linear-gradient(180deg,#f2d100,#b38b00);
+    color:#111;
+    font-weight:700;
+    font-size:1rem;
+    cursor:pointer;
+    transition:transform 0.1s ease, box-shadow 0.2s ease;
+  }
+  button:hover{transform:translateY(-3px);box-shadow:0 0 10px rgba(255,230,100,0.8);}
+  #replayBtn{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);margin-left:8px;}
+  #replayBtn:hover{background:rgba(255,255,255,0.2);}
+
+  .status{
+    margin-top:20px;
+    font-size:1.2rem;
+    text-shadow:0 0 10px rgba(255,255,100,0.8);
+  }
+
+  a#menuLink{
+    display:none;
+    margin-top:20px;
+    text-decoration:none;
+    background:linear-gradient(180deg,#fff480,#bdaa00);
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:bold;
+    color:#111;
+    box-shadow:0 0 12px rgba(255,255,160,0.5);
+  }
+
+  @media (max-width:700px){
+    h1{font-size:1.6rem;}
+    .bulb{width:36px;height:36px;}
+  }
 </style>
 </head>
 <body>
-<canvas id="gameCanvas"></canvas>
+<div class="container">
+  <h1>Backrooms — Énigme du Couloir</h1>
+  <div class="neon-strip" id="neon">
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+    <div class="bulb"></div>
+  </div>
 
-<!-- Interface -->
-<div class="hud">
-  <div class="bar-container"><div class="bar-label">Endurance</div><div class="bar"><div id="staminaBar" class="bar-fill stamina" style="width:100%"></div></div></div>
-  <div class="bar-container"><div class="bar-label">Bruit</div><div class="bar"><div id="noiseBar" class="bar-fill noise" style="width:0%"></div></div></div>
-  <div class="bar-container" id="batteryContainer" style="display:none;"><div class="bar-label">Batterie Lampe</div><div class="bar"><div id="batteryBar" class="bar-fill battery" style="width:100%"></div></div></div>
-</div>
+  <div class="question">Combien de fois la lumière va clignoter ensuite ?</div>
+  <input id="answer" type="number" placeholder="?" />
+  <div>
+    <button id="checkBtn">Valider</button>
+    <button id="replayBtn">Rejouer</button>
+  </div>
 
-<div class="inventory">
-  <div>Inventaire :</div>
-  <div id="inventoryItems">(vide)</div>
-  <div style="font-size:12px;margin-top:5px;">F: Lampe | R: Piège | E: Ramasser</div>
-</div>
-
-<div class="minimap"><canvas id="minimapCanvas" width="200" height="150"></canvas></div>
-<div class="controls">ZQSD / Flèches = déplacement<br>Shift = courir</div>
-<div id="pickupHint">Appuyer sur E pour ramasser</div>
-
-<div id="gameOver">
-  <h2 id="gameOverTitle">Game Over</h2>
-  <p id="gameOverMessage">Vous avez été attrapé !</p>
-  <button class="btn" id="restartBtn">Recommencer</button>
-  <button class="btn" id="menuBtn" style="display:none;">Menu</button>
+  <div id="status" class="status"></div>
+  <a href="Suite.html" id="menuLink">Retour au menu</a>
 </div>
 
 <script>
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-const minimap=document.getElementById('minimapCanvas');
-const mctx=minimap.getContext('2d');
-function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-resizeCanvas();window.addEventListener('resize',resizeCanvas);
+const bulbs = document.querySelectorAll('.bulb');
+const status = document.getElementById('status');
+const answer = document.getElementById('answer');
+const checkBtn = document.getElementById('checkBtn');
+const replayBtn = document.getElementById('replayBtn');
+const menuLink = document.getElementById('menuLink');
 
-/* === Chargement des images === */
-const spritePlayer=new Image();
-spritePlayer.src="ChatGPT Image 15 oct. 2025, 12_29_19.png"; // ton personnage
+const fibSeq = [1,2,3,5]; // shown pattern
+const nextValue = 8;
 
-const spriteTrap=new Image();
-spriteTrap.src="ChatGPT Image 15 oct. 2025, 12_29_11.png"; // ton piège
+let playing = false;
 
-const spriteBattery=new Image();
-spriteBattery.src="ChatGPT Image 15 oct. 2025, 12_28_57.png"; // ta batterie
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 
-/* === Données du jeu === */
-const TILE=35, MAP_W=80, MAP_H=60;
-let map=[], lit=[], items=[], monsters=[], traps=[], door={}, keys={}, player={x:0,y:0,r:16,speed:120,run:200,stamina:100,noise:0,battery:100,hasFlash:false,flashOn:false,traps:0};
-let cam={x:0,y:0}, game='play';
-
-function init(){genMap();placeDoor();placeItems();spawnMonsters();player.x=TILE*2;player.y=TILE*2;}
-function genMap(){map=[];lit=[];for(let y=0;y<MAP_H;y++){map[y]=[];lit[y]=[];for(let x=0;x<MAP_W;x++){if(x==0||y==0||x==MAP_W-1||y==MAP_H-1)map[y][x]=1;else map[y][x]=Math.random()<0.2?1:0;lit[y][x]=Math.random()<0.1;}}}
-function placeDoor(){let x,y;do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);door={x:x*TILE+TILE/2,y:y*TILE+TILE/2};}
-function placeItems(){items=[];const types=['flash','energy','battery','trap'];for(let i=0;i<35;i++){let x,y;do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);const type=types[Math.floor(Math.random()*types.length)];items.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,type,col:false});}}
-function spawnMonsters(){monsters=[];for(let i=0;i<3;i++){let x,y;do{x=Math.floor(Math.random()*(MAP_W-2))+1;y=Math.floor(Math.random()*(MAP_H-2))+1;}while(map[y][x]==1);monsters.push({x:x*TILE+TILE/2,y:y*TILE+TILE/2,r:15,speed:60,stun:0});}monsters.push({x:door.x+60,y:door.y+60,r:18,speed:50,stun:0});}
-
-/* === Contrôles === */
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e')collect();if(e.key.toLowerCase()==='f')toggleFlash();if(e.key.toLowerCase()==='r')dropTrap();});
-document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-
-/* === Boucle === */
-let last=0;
-function loop(t){const dt=(t-last)/1000;last=t;if(game==='play')update(dt);render();requestAnimationFrame(loop);}
-
-/* === Logique === */
-function wall(x,y){const mx=Math.floor(x/TILE),my=Math.floor(y/TILE);return map[my]&&map[my][mx]==1;}
-function update(dt){let dx=0,dy=0;if(keys['z']||keys['arrowup']||keys['w'])dy-=1;if(keys['s']||keys['arrowdown'])dy+=1;if(keys['q']||keys['arrowleft']||keys['a'])dx-=1;if(keys['d']||keys['arrowright'])dx+=1;if(dx||dy){const len=Math.hypot(dx,dy);dx/=len;dy/=len;const run=keys['shift']&&player.stamina>0;const spd=run?player.run:player.speed;const nx=player.x+dx*spd*dt,ny=player.y+dy*spd*dt;if(!wall(nx,player.y))player.x=nx;if(!wall(player.x,ny))player.y=ny;if(run){player.stamina-=40*dt;player.noise+=70*dt;}else player.stamina+=25*dt;}else player.noise-=40*dt;player.stamina=Math.max(0,Math.min(100,player.stamina));player.noise=Math.max(0,Math.min(100,player.noise));if(player.flashOn){player.battery-=15*dt;if(player.battery<=0){player.flashOn=false;}}updateMonsters(dt);check();cam.x=player.x-canvas.width/2;cam.y=player.y-canvas.height/2;cam.x=Math.max(0,Math.min(cam.x,MAP_W*TILE-canvas.width));cam.y=Math.max(0,Math.min(cam.y,MAP_H*TILE-canvas.height));updateHUD();}
-function updateMonsters(dt){for(let m of monsters){if(m.stun>0){m.stun-=dt;continue;}const dist=Math.hypot(m.x-player.x,m.y-player.y);if(dist<150+player.noise*2){const dx=(player.x-m.x)/dist,dy=(player.y-m.y)/dist;const spd=m.speed*(player.noise>50?1.8:1);const mx=dx*spd*dt,my=dy*spd*dt;if(!wall(m.x+mx,m.y))m.x+=mx;if(!wall(m.x,m.y+my))m.y+=my;}}}
-function updateHUD(){document.getElementById('staminaBar').style.width=player.stamina+'%';document.getElementById('noiseBar').style.width=player.noise+'%';if(player.hasFlash){document.getElementById('batteryContainer').style.display='block';document.getElementById('batteryBar').style.width=player.battery+'%';}let inv='';if(player.hasFlash)inv+='Lampe ';if(player.traps>0)inv+=`Pièges:${player.traps}`;if(!inv)inv='(vide)';document.getElementById('inventoryItems').textContent=inv;let near=false;for(let i of items){if(!i.col&&Math.hypot(i.x-player.x,i.y-player.y)<30){near=true;break;}}document.getElementById('pickupHint').style.display=near?'block':'none';}
-function collect(){for(let i of items){if(!i.col&&Math.hypot(i.x-player.x,i.y-player.y)<30){i.col=true;if(i.type==='flash'){player.hasFlash=true;}if(i.type==='energy'){player.stamina=Math.min(100,player.stamina+40);}if(i.type==='battery'&&player.hasFlash){player.battery=Math.min(100,player.battery+50);}if(i.type==='trap')player.traps++;}}}
-function toggleFlash(){if(player.hasFlash&&player.battery>0)player.flashOn=!player.flashOn;}
-function dropTrap(){if(player.traps>0){traps.push({x:player.x,y:player.y,r:12});player.traps--;}}
-function check(){for(let m of monsters){if(Math.hypot(m.x-player.x,m.y-player.y)<m.r+player.r)return gameOver();}if(Math.hypot(door.x-player.x,door.y-player.y)<20)return win();for(let t of traps){for(let m of monsters){if(Math.hypot(t.x-m.x,t.y-m.y)<t.r+m.r){m.stun=4;}}}}
-function gameOver(){game='end';document.getElementById('gameOver').style.display='block';document.getElementById('gameOverTitle').textContent='Game Over';document.getElementById('gameOverMessage').textContent='Attrapé par un monstre !';}
-function win(){game='end';document.getElementById('gameOver').style.display='block';document.getElementById('gameOverTitle').textContent='Victoire !';document.getElementById('gameOverMessage').textContent='Le code est ---9--';document.getElementById('menuBtn').style.display='inline-block';document.getElementById('restartBtn').style.display='none';}
-document.getElementById('restartBtn').onclick=()=>location.reload();
-document.getElementById('menuBtn').onclick=()=>window.location.href="index.html";
-
-/* === Rendu === */
-function render(){
-  ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
-  const sx=Math.floor(cam.x/TILE),sy=Math.floor(cam.y/TILE);
-  const ex=Math.min(MAP_W,Math.ceil((cam.x+canvas.width)/TILE));
-  const ey=Math.min(MAP_H,Math.ceil((cam.y+canvas.height)/TILE));
-  for(let y=sy;y<ey;y++)for(let x=sx;x<ex;x++){
-    const scrX=x*TILE-cam.x,scrY=y*TILE-cam.y;
-    ctx.fillStyle=map[y][x]===1?'#333':(lit[y][x]?'#c9c16a':'#555');
-    ctx.fillRect(scrX,scrY,TILE,TILE);
+async function flash(count){
+  for(let i=0;i<count;i++){
+    bulbs.forEach(b=>b.classList.add('on'));
+    await wait(250);
+    bulbs.forEach(b=>b.classList.remove('on'));
+    await wait(150);
   }
-
-  for(let i of items){
-    if(i.col)continue;
-    const x=i.x-cam.x,y=i.y-cam.y;
-    if(i.type==='battery'){ctx.drawImage(spriteBattery,x-12,y-6,24,12);}
-    else if(i.type==='trap'){ctx.drawImage(spriteTrap,x-10,y-10,20,20);}
-    else if(i.type==='flash'){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fill();}
-    else if(i.type==='energy'){ctx.fillStyle='#44ff44';ctx.fillRect(x-5,y-10,10,20);}
-  }
-
-  ctx.fillStyle='#999900';ctx.fillRect(door.x-cam.x-10,door.y-cam.y-20,20,40);
-
-  for(let t of traps){ctx.drawImage(spriteTrap,t.x-cam.x-10,t.y-cam.y-10,20,20);}
-  for(let m of monsters){ctx.fillStyle=m.stun>0?'#888':'#ff2222';ctx.beginPath();ctx.arc(m.x-cam.x,m.y-cam.y,m.r,0,2*Math.PI);ctx.fill();}
-  
-  ctx.drawImage(spritePlayer,player.x-cam.x-16,player.y-cam.y-28,32,48);
-
-  if(player.flashOn){
-    ctx.save();ctx.globalAlpha=0.15;
-    const grad=ctx.createRadialGradient(player.x-cam.x,player.y-cam.y,0,player.x-cam.x,player.y-cam.y,150);
-    grad.addColorStop(0,'rgba(255,255,150,0.9)');
-    grad.addColorStop(1,'transparent');
-    ctx.fillStyle=grad;ctx.beginPath();ctx.arc(player.x-cam.x,player.y-cam.y,150,0,2*Math.PI);ctx.fill();ctx.restore();
-  }
-
-  drawMini();
-}
-function drawMini(){
-  mctx.fillStyle='#000';mctx.fillRect(0,0,minimap.width,minimap.height);
-  for(let m of monsters){mctx.fillStyle='#ff3333';mctx.fillRect(m.x/(MAP_W*TILE)*minimap.width,m.y/(MAP_H*TILE)*minimap.height,4,4);}
-  mctx.fillStyle='#ffffff';mctx.fillRect(player.x/(MAP_W*TILE)*minimap.width,player.y/(MAP_H*TILE)*minimap.height,4,4);
-  mctx.fillStyle='#ffff00';mctx.fillRect(door.x/(MAP_W*TILE)*minimap.width,door.y/(MAP_H*TILE)*minimap.height,4,4);
 }
 
-init();
-requestAnimationFrame(loop);
+async function play(){
+  if(playing) return;
+  playing = true;
+  status.textContent = "Observe attentivement les clignotements...";
+  for(const n of fibSeq){
+    await flash(n);
+    await wait(600);
+  }
+  status.textContent = "À toi de jouer.";
+  playing = false;
+}
+
+function validate(){
+  const val = parseInt(answer.value);
+  if(isNaN(val)){status.textContent="Entre un nombre.";return;}
+  if(val === nextValue){
+    status.textContent="✔️ Correct ! La lumière clignotera 8 fois. Le code est -3-.";
+    menuLink.style.display="inline-block";
+    celebrate();
+  } else {
+    status.textContent="❌ Mauvaise réponse. Réessaye.";
+    negativeBlink();
+  }
+}
+
+async function celebrate(){
+  for(let r=0;r<3;r++){
+    bulbs.forEach((b,i)=>setTimeout(()=>b.classList.add('on'),i*30+r*200));
+    await wait(300);
+    bulbs.forEach(b=>b.classList.remove('on'));
+    await wait(100);
+  }
+}
+
+async function negativeBlink(){
+  bulbs.forEach(b=>b.classList.add('on'));
+  await wait(120);
+  bulbs.forEach(b=>b.classList.remove('on'));
+}
+
+checkBtn.onclick = validate;
+answer.addEventListener("keydown",e=>{if(e.key==="Enter")validate();});
+replayBtn.onclick = play;
+
+// auto play once
+window.onload = ()=>setTimeout(play,800);
 </script>
 </body>
 </html>

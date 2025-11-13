@@ -1,378 +1,241 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Into The Backrooms</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #1e1e1e;
-      color: white;
-      text-align: center;
-      overflow-x: hidden;
-    }
-
-    header {
-      padding: 20px;
-      background-color: #111;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 2.5em;
-    }
-
-    .games {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      padding: 40px;
-    }
-
-    .game {
-      background-color: #2c2c2c;
-      padding: 15px;
-      border-radius: 10px;
-      transition: transform 0.2s;
-    }
-
-    .game:hover {
-      transform: scale(1.05);
-      cursor: pointer;
-    }
-
-    .game img {
-      width: 100%;
-      border-radius: 10px;
-    }
-
-    .game p {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    footer {
-      background-color: #111;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
-
-    /* === BOUTON CODE + GALÈRE === */
-    .wrap {
-      display: grid;
-      place-items: center;
-      gap: 10px;
-      padding: 24px;
-    }
-
-    .btn {
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.06);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(2,6,23,0.6);
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .btn:active { transform: translateY(1px) scale(.998); }
-
-    .help-btn {
-      background: linear-gradient(180deg, rgba(0,150,255,0.3), rgba(0,100,200,0.2));
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #aee3ff;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: all .15s ease;
-    }
-    .help-btn:hover {
-      transform: scale(1.05);
-      background: linear-gradient(180deg, rgba(0,150,255,0.4), rgba(0,100,200,0.25));
-    }
-
-    /* === MODAL CODE === */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-      backdrop-filter: blur(4px) saturate(1.1);
-    }
-    .overlay.visible { display: flex; }
-
-    .card {
-      width: min(420px, 92%);
-      background: linear-gradient(180deg, rgba(10,14,22,0.9), rgba(8,10,18,0.88));
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 12px 40px rgba(2,6,23,0.7);
-      border: 1px solid rgba(255,255,255,0.04);
-      text-align: center;
-    }
-
-    .card h2 { margin: 0 0 12px 0; font-size: 18px; color: #7dd3fc; }
-    .card p { margin: 0 0 18px 0; opacity: .9; font-size: 14px; color: #e6eef8; }
-
-    .input-wrap {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    input[type="password"], input[type="text"] {
-      width: 160px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.02);
-      color: white;
-      outline: none;
-      font-size: 16px;
-      text-align: center;
-    }
-
-    .actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .small-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      color: white;
-    }
-
-    .success {
-      font-size: 15px;
-      line-height: 1.35;
-      color: #d7ffd9;
-      background: rgba(20,45,20,0.25);
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(40,120,60,0.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
-    }
-
-    .red-overlay {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      background: rgba(160,10,10,0.06);
-      opacity: 0;
-      transition: opacity .18s ease;
-    }
-
-    .shake { animation: shake-anim 0.6s cubic-bezier(.36,.07,.19,.97); }
-
-    @keyframes shake-anim {
-      0% { transform: translateX(0); }
-      10% { transform: translateX(-6px) rotate(-0.6deg); }
-      20% { transform: translateX(6px) rotate(0.6deg); }
-      50% { transform: translateX(-3px) rotate(-0.2deg); }
-      100% { transform: translateX(0); }
-    }
-
-    .wrong .red-overlay { opacity: 1; transition: opacity .08s linear; }
-
-    @keyframes glitchFlash {
-      0% { background: #000; opacity: 0; }
-      20% { background: #ff0000; opacity: 0.8; transform: skew(2deg,2deg); }
-      40% { background: #000; opacity: 1; transform: translateX(-5px); }
-      60% { background: #ff0000; opacity: 0.8; transform: translateX(5px); }
-      80% { background: #000; opacity: 1; }
-      100% { opacity: 0; }
-    }
-	
- .games {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  padding: 40px;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance en cours...</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #d8cc95;
+  --light: #f0e7b5;
+  --shadow: #a79f73;
+  --text: #2a2a2a;
+  --muted: #4a4a4a;
+  --accent: #f6ffb0;
+  --noise: url('https://grainy-gradients.vercel.app/noise.svg');
 }
-  </style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Inter",sans-serif;
+  background: var(--bg);
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+  color:var(--text);
+}
+
+/* Éclairage de pièce backrooms */
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background:radial-gradient(circle at 50% 20%, rgba(255,255,200,0.5), rgba(216,204,149,0.95) 60%, #bfb272 100%);
+  mix-blend-mode:multiply;
+  z-index:-3;
+}
+
+/* Bruit visuel / grain */
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  background:var(--noise);
+  opacity:0.12;
+  mix-blend-mode:overlay;
+  z-index:3;
+  pointer-events:none;
+  animation:staticNoise 1s steps(10) infinite;
+}
+@keyframes staticNoise{
+  0%{background-position:0 0;}
+  100%{background-position:100px 100px;}
+}
+
+/* Lignes du plafond */
+.ceiling{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:10px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(200,190,130,0.3) 0px,
+    rgba(200,190,130,0.3) 30px,
+    rgba(180,170,110,0.4) 31px,
+    rgba(180,170,110,0.4) 60px
+  );
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Conteneur principal */
+.container{
+  position:relative;
+  padding:60px 40px;
+  background:rgba(255,255,255,0.05);
+  border:2px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 0 40px rgba(0,0,0,0.2);
+  text-align:center;
+  animation:fadeUp 0.8s ease forwards;
+  z-index:2;
+}
+
+/* Effet de scintillement de néon */
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.4;
+  }
+}
+
+/* Titre glitch Backrooms */
+h1{
+  font-family:"Space Mono", monospace;
+  font-size:2.5rem;
+  color:#fffed1;
+  text-transform:uppercase;
+  text-shadow: 0 0 10px rgba(255,255,200,0.6), 0 0 25px rgba(255,255,150,0.4);
+  position:relative;
+  margin-bottom:15px;
+  animation:glitch 2s infinite, flicker 6s infinite;
+}
+h1::before, h1::after{
+  content:attr(data-text);
+  position:absolute;
+  left:0;top:0;width:100%;
+}
+h1::before{
+  left:2px;
+  text-shadow:-2px 0 rgba(255,0,0,0.5);
+  clip:rect(0,900px,0,0);
+  animation:glitchTop 1.5s infinite linear;
+}
+h1::after{
+  left:-2px;
+  text-shadow:2px 0 rgba(0,255,255,0.5);
+  clip:rect(0,900px,0,0);
+  animation:glitchBottom 1.5s infinite linear;
+}
+@keyframes glitchTop{
+  0%{clip:rect(0,9999px,10px,0)}
+  50%{clip:rect(5px,9999px,15px,0)}
+  100%{clip:rect(0,9999px,10px,0)}
+}
+@keyframes glitchBottom{
+  0%{clip:rect(15px,9999px,25px,0)}
+  50%{clip:rect(20px,9999px,30px,0)}
+  100%{clip:rect(15px,9999px,25px,0)}
+}
+@keyframes glitch{
+  0%{transform:translate(0)}
+  20%{transform:translate(-1px,1px)}
+  40%{transform:translate(1px,-1px)}
+  60%{transform:translate(-1px,1px)}
+  80%{transform:translate(1px,1px)}
+  100%{transform:translate(0)}
+}
+
+/* Texte */
+p{
+  color:var(--muted);
+  font-size:1.1rem;
+  margin-bottom:25px;
+  line-height:1.5;
+}
+
+/* Compteur */
+.counter{
+  font-family:"Space Mono", monospace;
+  font-size:2rem;
+  background:rgba(0,0,0,0.1);
+  padding:10px 20px;
+  border-radius:8px;
+  box-shadow:inset 0 0 10px rgba(0,0,0,0.3);
+  margin-bottom:20px;
+  color:#1e1e1e;
+  text-shadow:0 0 8px rgba(255,255,200,0.6);
+}
+
+/* Bouton style Backrooms */
+.contact-btn{
+  display:inline-block;
+  background:linear-gradient(90deg, #f9f29c, #c9bf6e);
+  color:#2a2a2a;
+  font-weight:700;
+  padding:12px 28px;
+  border-radius:30px;
+  box-shadow:0 0 15px rgba(255,255,150,0.3);
+  text-decoration:none;
+  transition:0.3s ease;
+}
+.contact-btn:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 30px rgba(255,255,100,0.6);
+}
+
+/* Animation fade */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* Lente oscillation du décor */
+.light-flicker{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(255,255,230,0.03);
+  mix-blend-mode:overlay;
+  animation:roomLight 8s ease-in-out infinite alternate;
+  z-index:-1;
+}
+@keyframes roomLight{
+  0%{opacity:0.1;}
+  50%{opacity:0.25;}
+  100%{opacity:0.1;}
+}
+
+/* Footer */
+footer{
+  color:rgba(50,50,50,0.8);
+  font-size:0.9rem;
+  margin-top:15px;
+  text-shadow:0 0 1px rgba(255,255,200,0.2);
+}
+</style>
 </head>
 <body>
+<div class="ceiling"></div>
+<div class="light-flicker"></div>
 
-  <header>
-    <h1>Into The Backrooms</h1>
-    <p>Il est conseillé d'effectuer les jeux dans l'ordre.</p>
-  </header>
+<div class="container">
+  <h1 data-text="Maintenance en cours...">Maintenance en cours...</h1>
+  <p>Vous semblez avoir accédé à un niveau supprimé.<br>Veuillez patienter avant la réinitialisation du système.</p>
 
-  <section class="games">
-    <div class="game">
-      <a href="Bouteilles.html">
-        <img src="https://images.bfmtv.com/wfZCRE9QMsAsAjAfvBAyCw1Ipb4=/0x0:1920x1080/1920x0/images/Les-Backrooms-une-legende-urbaine-d-internet-1873456.jpg">
-        <p>Les Bouteilles</p>
-      </a>
-    </div>
-    <div class="game">
-      <a href="Dino.html">
-        <img src="https://assets.indreams.me/docs/images/uploads/5c9aa640b957b7ad013559abf6fad1a8.jfif">
-        <p>Le Couloir</p>
-      </a>
-    </div>
-    <div class="game">
-      <a href="Game.html">
-        <img src="https://backroomsgame.io/data/image/backrooms-game.jpg">
-        <p>La salle jaune</p>
-      </a>
-    </div>
-  
-      <div class="game">
-      <a href="1.html">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFxZveyaKOyMnZN5cNX2iuE8LbkCNdPvw7_Q&s">
-        <p>Les aveugles</p>
-      </a>
-    </div>
-  </section>
-  <!-- === Boutons === -->
-  <div class="wrap">
-    <button class="btn" id="openBtn">Code</button>
-    <a href="Galère.html"><button class="help-btn">Cliques ici si tu galère</button></a>
-  </div>
+  <div class="counter" id="counter">Reprise dans 00:00:00</div>
 
-  <!-- === Modal code === -->
-  <div class="overlay" id="overlay">
-    <div class="card" id="card">
-      <h2>Entrer le code</h2>
-      <p>Veuillez saisir le code à 6 chiffres pour continuer.</p>
-      <div class="input-wrap">
-        <input id="codeInput" type="password" maxlength="6" placeholder="●●●●●●">
-      </div>
-      <div class="actions">
-        <button class="small-btn" id="submitBtn">Valider</button>
-        <button class="small-btn" id="closeBtn">Annuler</button>
-      </div>
-      <div id="resultArea" style="margin-top:14px;"></div>
-    </div>
-  </div>
+  <a href="https://discord.gg/SkRF8HqmQt" target="_blank" class="contact-btn">Contacter le support</a>
+  <footer>© 2025 — Erreur 666 : Site en Maintenance</footer>
+</div>
 
-  <div class="red-overlay" id="redOverlay"></div>
+<script>
+// Compteur Backrooms
+const targetDate = new Date("2025-11-13T09:59:00").getTime();
+function updateCounter(){
+  const now = new Date().getTime();
+  const distance = targetDate - now;
+  if(distance <= 0){ window.location.href="index1.html"; return; }
+  const hours=String(Math.floor((distance%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
+  const minutes=String(Math.floor((distance%(1000*60*60))/(1000*60))).padStart(2,'0');
+  const seconds=String(Math.floor((distance%(1000*60))/1000)).padStart(2,'0');
+  document.getElementById("counter").textContent=`Reprise dans ${hours}:${minutes}:${seconds}`;
+}
+updateCounter();
+setInterval(updateCounter,1000);
+</script>
 
-  <script>
-    const CORRECT = '168975';
-    const MAX_ATTEMPTS = 5;
-    let attempts = 0;
-
-    const body = document.body;
-    const openBtn = document.getElementById('openBtn');
-    const overlay = document.getElementById('overlay');
-    const closeBtn = document.getElementById('closeBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const codeInput = document.getElementById('codeInput');
-    const resultArea = document.getElementById('resultArea');
-    const card = document.getElementById('card');
-
-    // Ajout œil pour voir le code
-    const eyeBtn = document.createElement('button');
-    eyeBtn.textContent = '👁️';
-    eyeBtn.style.background = 'transparent';
-    eyeBtn.style.border = 'none';
-    eyeBtn.style.cursor = 'pointer';
-    eyeBtn.style.fontSize = '18px';
-    document.querySelector('.input-wrap').appendChild(eyeBtn);
-    let showCode = false;
-    eyeBtn.addEventListener('click', () => {
-      showCode = !showCode;
-      codeInput.type = showCode ? 'text' : 'password';
-    });
-
-    openBtn.addEventListener('click', () => {
-      overlay.classList.add('visible');
-      resultArea.innerHTML = '';
-      codeInput.value = '';
-      setTimeout(() => codeInput.focus(), 100);
-    });
-
-    closeBtn.addEventListener('click', () => {
-      overlay.classList.remove('visible');
-      codeInput.value = '';
-    });
-
-    submitBtn.addEventListener('click', checkCode);
-    codeInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkCode();
-      if (e.key === 'Escape') overlay.classList.remove('visible');
-    });
-
-    function checkCode() {
-      const val = codeInput.value.trim();
-      if (val === CORRECT) {
-        resultArea.innerHTML = `
-          <div class="success">
-            🗝️ <strong>Bravo !</strong><br><br>
-            Vous n'avez maintenant plus de monstres derrière vous.<br>
-            Encore quelques énigmes et vous pourrez vous échapper...<br><br>
-            Continuez sur le serveur Discord.
-          </div>`;
-        codeInput.disabled = true;
-        submitBtn.disabled = true;
-      } else {
-        attempts++;
-        triggerWrongFeedback();
-        if (attempts >= MAX_ATTEMPTS) triggerBackroomsEnd();
-      }
-    }
-
-    function triggerWrongFeedback() {
-      body.classList.add('wrong');
-      card.classList.remove('shake');
-      void card.offsetWidth;
-      card.classList.add('shake');
-      if (navigator.vibrate) { try { navigator.vibrate([150,80,150]); } catch(e){} }
-      resultArea.innerHTML = `<div style="color:#ffd6d6;font-size:13px;padding-top:6px;">
-        Code incorrect.
-      </div>`;
-      setTimeout(() => {
-        body.classList.remove('wrong');
-        card.classList.remove('shake');
-      }, 700);
-    }
-
-    function triggerBackroomsEnd() {
-      const glitchOverlay = document.createElement('div');
-      glitchOverlay.style.position = 'fixed';
-      glitchOverlay.style.inset = '0';
-      glitchOverlay.style.background = '#000';
-      glitchOverlay.style.zIndex = '999';
-      glitchOverlay.style.animation = 'glitchFlash 2s ease-in-out forwards';
-      document.body.appendChild(glitchOverlay);
-      setTimeout(() => {
-        document.body.innerHTML = `
-          <style>
-            body {
-              margin: 0;
-              overflow: hidden;
-              background: black;
-              animation: fadeIn 2s ease;
-            }
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-          </style>
-          <img src="https://www.horreur.quebec/wp-content/plugins/wp-youtube-lyte/lyteCache.php?origThumbUrl=https%3A%2F%2Fi.ytimg.com%2Fvi%2FH4dGpz6cnHo%2F0.jpg"
-            style="width:100vw;height:100vh;object-fit:cover;animation:appear 2s ease;">
-        `;
-      }, 2000);
-    }
-  </script>
 </body>
 </html>

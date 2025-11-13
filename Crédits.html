@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crédits</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #d8cc95;
+  --light: #f0e7b5;
+  --text: #222;
+  --muted: #3a3a3a;
+  --accent: #f6ffb0;
+  --noise: url('https://grainy-gradients.vercel.app/noise.svg');
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Inter",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+
+/* Bruit visuel et lumière */
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background:radial-gradient(circle at 50% 20%, rgba(255,255,210,0.6), rgba(220,210,150,0.95) 60%, #bfb272 100%);
+  z-index:-2;
+}
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  background:var(--noise);
+  opacity:0.1;
+  mix-blend-mode:overlay;
+  animation:staticNoise 1s steps(10) infinite;
+  z-index:2;
+  pointer-events:none;
+}
+@keyframes staticNoise{
+  0%{background-position:0 0;}
+  100%{background-position:100px 100px;}
+}
+
+/* Lueur mouvante */
+.light{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(255,255,230,0.05);
+  mix-blend-mode:overlay;
+  animation:flicker 5s ease-in-out infinite alternate;
+  z-index:1;
+}
+@keyframes flicker{
+  0%,100%{opacity:0.08;}
+  50%{opacity:0.2;}
+}
+
+/* Conteneur principal */
+.credits-container{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+
+/* Défilement vertical */
+.credits{
+  position:absolute;
+  bottom:-100%;
+  width:100%;
+  text-align:center;
+  animation:scrollUp 35s linear forwards;
+  color:var(--text);
+  text-shadow:0 0 6px rgba(255,255,200,0.3);
+}
+@keyframes scrollUp{
+  0%{bottom:-100%;}
+  100%{bottom:100%;}
+}
+
+/* Titre principal */
+h1{
+  font-family:"Space Mono", monospace;
+  font-size:2.5rem;
+  text-transform:uppercase;
+  color:#fffed1;
+  margin-bottom:40px;
+  text-shadow:0 0 20px rgba(255,255,150,0.5);
+  animation:glitch 2s infinite;
+}
+@keyframes glitch{
+  0%{transform:translate(0);}
+  20%{transform:translate(-1px,1px);}
+  40%{transform:translate(1px,-1px);}
+  60%{transform:translate(-1px,1px);}
+  80%{transform:translate(1px,1px);}
+  100%{transform:translate(0);}
+}
+
+/* Catégories */
+.section{
+  margin-bottom:60px;
+}
+.section h2{
+  font-family:"Space Mono", monospace;
+  font-size:1.5rem;
+  margin-bottom:15px;
+  color:#f7f5d2;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.section p{
+  font-size:1.1rem;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+
+/* Footer */
+footer{
+  font-size:1rem;
+  margin-top:60px;
+  color:rgba(60,60,60,0.8);
+}
+
+/* Effet ombre mouvante sur le texte */
+@keyframes shadowMove {
+  0% { text-shadow: 0 0 8px rgba(255,255,200,0.5); }
+  50% { text-shadow: 0 0 20px rgba(255,255,150,0.4); }
+  100% { text-shadow: 0 0 8px rgba(255,255,200,0.5); }
+}
+.credits *{
+  animation:shadowMove 6s ease-in-out infinite alternate;
+}
+</style>
+</head>
+<body>
+
+<div class="light"></div>
+
+<div class="credits-container">
+  <div class="credits">
+    <h1>Crédits</h1>
+
+    <div class="section">
+      <h2>Développement</h2>
+      <p>FIOGaming - Lead Développement</p>
+      <p>FIOGaming — Gameplay & Interfaces</p>
+      <p>FIOGaming — Lead Script</p>
+      <p>ChatGPT (GOAT) — Back Script</p>
+
+    </div>
+
+    <div class="section">
+      <h2>Ideas</h2>
+      <p>Le_Poulet68 - Les Bouteilles</p>
+      <p>ben_et_panpan - Le Couloir</p>
+      <p>FIOGaming - La Salle jaune</p>
+
+    </div>
+
+    <div class="section">
+      <h2>Enigmas</h2>
+      <p>FIOGaming - 1 & 2</p>
+      <p>...</p>
+    </div>
+
+    <div class="section">
+      <h2>Technical Support</h2>
+      <p>Team FIO : FIOGaming, Gabivovo, Annonyme, Le_Poulet68, ADAM.VR, ew_an63</p>
+    </div>
+	
+	<div class="section">
+	  <h2>Others</h2>
+	  <p>ben_et_panpan - Bug tester</p>
+	</div>
+
+    <div class="section">
+      <h2>Special Thanks</h2>
+      <p>Those who have patiently waited for maintenance</p>
+      <p>To those who have spent more than two hours here</p>
+      <p>To those who watched the credits</p>
+      <p>And to you, anonymous explorer...</p>
+    </div>
+
+    <footer>© 2025 — Into the Backrooms - Touts droits réservés</footer>
+  </div>
+</div>
+</body>
+</html>

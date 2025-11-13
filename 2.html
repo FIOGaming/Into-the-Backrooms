@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erreur Système - Backrooms</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+  }
+
+  /* effet CRT */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 0, 0.05),
+      rgba(0, 255, 0, 0.05) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+  }
+
+  .glitch {
+    font-size: 1.8rem;
+    text-shadow: 0 0 10px #0f0;
+    animation: flicker 0.1s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  input {
+    background: black;
+    border: 1px solid #0f0;
+    color: #0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    padding: 8px 12px;
+    text-align: center;
+    width: 120px;
+    margin-top: 10px;
+  }
+
+  button {
+    background: #0f0;
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    font-weight: bold;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #fff;
+  }
+
+  a {
+    display: inline-block;
+    margin-top: 15px;
+    text-decoration: none;
+    background: #0f0;
+    color: #000;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+  a:hover {
+    background: #fff;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div id="errorText" class="glitch">[ERREUR CRITIQUE DU SYSTÈME]</div>
+    <div id="loadingText" class="glitch"></div>
+
+    <div id="finalMessage" class="glitch hidden">TU NE DEVAIS PAS VENIR ICI</div>
+
+    <div id="question" class="hidden">
+      <p>Entrez le numéro de l’erreur pour continuer :</p>
+      <input type="number" id="answer" placeholder="..." />
+      <br>
+      <button id="validate">Valider</button>
+      <p id="result"></p>
+      <a href="Suite.html" id="menuLink" class="hidden">Retour au menu</a>
+    </div>
+  </div>
+
+<script>
+const errorText = document.getElementById("errorText");
+const loadingText = document.getElementById("loadingText");
+const finalMessage = document.getElementById("finalMessage");
+const question = document.getElementById("question");
+const result = document.getElementById("result");
+const answer = document.getElementById("answer");
+const validate = document.getElementById("validate");
+const menuLink = document.getElementById("menuLink");
+
+let lines = [
+  "[ERREUR CRITIQUE DU SYSTÈME]",
+  "Chargement du noyau...",
+  "Fichiers corrompus...",
+  "Récupération de la mémoire...",
+  "Mémoire endommagée",
+  "Simulation refusée...",
+  "Analyse en cours...",
+  "Problèmes détectés (1)",
+  "Problèmes détectés (9)",
+  "Problèmes détectés (23)",
+  "Problèmes détectés (76)",
+  "Problèmes détectés (106)",
+  "Problèmes détectés (156)",
+  "Problèmes détectés (226)",
+  "Redémarage système",
+  "Redémarage interronpu",
+  "Lancement de la simulation",
+  "Erreur 401 : Accès non autorisé",
+  "Veuillez confirmer votre identité",
+  "Identité confirmée",
+  "Redémarage de la simulation",
+  "Tout système rétablis",
+  "Veuillez patienter (17s)",
+  "Veuillez patienter (11s)",
+  "Veuillez patienter (5s)",
+  "Veuillez patienter (1s)",
+  "Redémarage en cours",
+  ".",
+  "..",
+  "...",
+  ".",
+  "..",
+  "...",
+  ">>> TU NE DEVAIS PAS VENIR ICI <<<"
+];
+
+async function glitchSequence() {
+  for (let i = 0; i < lines.length; i++) {
+    await new Promise(r => setTimeout(r, 1000 + Math.random() * 500));
+    loadingText.textContent = lines[i];
+  }
+  await new Promise(r => setTimeout(r, 1500));
+  loadingText.classList.add("hidden");
+  errorText.classList.add("hidden");
+  finalMessage.classList.remove("hidden");
+  setTimeout(() => {
+    question.classList.remove("hidden");
+  }, 2000);
+}
+
+validate.addEventListener("click", () => {
+  const val = parseInt(answer.value);
+  if (val === 401) {
+    result.textContent = "✔️ Correct. Accès autorisé. Le code est 7--";
+    result.style.color = "#0f0";
+    menuLink.classList.remove("hidden");
+  } else if (isNaN(val)) {
+    result.textContent = "Entre un nombre...";
+    result.style.color = "#ff0";
+  } else {
+    result.textContent = "❌ Mauvaise réponse.";
+    result.style.color = "#f00";
+  }
+});
+
+window.onload = glitchSequence;
+</script>
+</body>
+</html>
