@@ -74,6 +74,7 @@ function generateChunk(cx, cy) {
             if(x===0||y===0||x===chunkSize-1||y===chunkSize-1) row.push(1);
             else row.push(0);
         }
+        row;
         chunk.push(row);
     }
 
@@ -277,15 +278,19 @@ function triggerWin(){
     overlay.style.display="flex";
 }
 
-document.addEventListener('keydown', e=>keys[e.key]=true);
-document.addEventListener('keyup', e=>keys[e.key]=false);
+// --- TOUCHES (AJOUT ZQSD) ---
+document.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
 
 function gameLoop(){
     if(!gameOver && !gameWon){
-        if(keys['ArrowUp']) movePlayer(0,-playerSpeed);
-        if(keys['ArrowDown']) movePlayer(0,playerSpeed);
-        if(keys['ArrowLeft']) movePlayer(-playerSpeed,0);
-        if(keys['ArrowRight']) movePlayer(playerSpeed,0);
+
+        // flèches OU ZQSD
+        if(keys['arrowup'] || keys['z']) movePlayer(0,-playerSpeed);
+        if(keys['arrowdown'] || keys['s']) movePlayer(0,playerSpeed);
+        if(keys['arrowleft'] || keys['q']) movePlayer(-playerSpeed,0);
+        if(keys['arrowright'] || keys['d']) movePlayer(playerSpeed,0);
+
         monsters.forEach(moveMonster);
         if(Math.random() < 0.01) spawnMonsterAroundPlayer();
     }
